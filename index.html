@@ -72,7 +72,6 @@
       display: none;
     }
 
-    /* Settings panel at bottom-right */
     #controls {
       position: fixed;
       bottom: 16px;
@@ -94,7 +93,6 @@
       display: none;
     }
 
-    /* Restore Settings button fixed at bottom-right when minimized */
     #restore-btn {
       position: fixed;
       bottom: 16px;
@@ -305,6 +303,7 @@
 </head>
 <body>
   <div id="stage">
+    <audio id="bgm" src="back.mp3" autoplay loop preload="auto"></audio>
     <video id="webcam" autoplay playsinline muted></video>
     <input id="file-input" type="file" accept="image/*" />
     <canvas id="output"></canvas>
@@ -345,13 +344,18 @@
         <div class="ctrl-label"><span>Screen / Face Glitch Bursts</span><span id="val-screen-glitch">40%</span></div>
         <input id="sl-screen-glitch" type="range" min="0" max="100" value="40" />
       </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Music Volume (back.mp3)</span><span id="val-vol">65%</span></div>
+        <input id="sl-vol" type="range" min="0" max="100" value="65" />
+      </div>
       <div class="btn-grid">
         <button id="btn-eyemode" class="ui-btn">EYES: BOTH</button>
         <button id="btn-psycho" class="ui-btn">⚡ BURST MODE</button>
+        <button id="btn-music" class="ui-btn active">🔊 MUSIC: ON</button>
+        <button id="btn-hud" class="ui-btn">FPS HUD: ON</button>
         <button id="btn-upload" class="ui-btn">🖼 USE PHOTO</button>
         <button id="btn-cam" class="ui-btn">📷 USE CAM</button>
-        <button id="btn-hud" class="ui-btn">FPS HUD: ON</button>
-        <button id="btn-snap" class="ui-btn">📸 SNAPSHOT</button>
+        <button id="btn-snap" class="ui-btn" style="grid-column: span 2;">📸 SNAPSHOT</button>
       </div>
     </div>
 
@@ -379,6 +383,7 @@
     const LEFT_EYE_RING  = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
     const RIGHT_EYE_RING = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
 
+    const bgm = document.getElementById("bgm");
     const video = document.getElementById("webcam");
     const fileInput = document.getElementById("file-input");
     const canvas = document.getElementById("output");
@@ -396,8 +401,10 @@
     const slSpread = document.getElementById("sl-spread");
     const slGlitch = document.getElementById("sl-glitch");
     const slScreenGlitch = document.getElementById("sl-screen-glitch");
+    const slVol = document.getElementById("sl-vol");
     const btnEyeMode = document.getElementById("btn-eyemode");
     const btnPsycho = document.getElementById("btn-psycho");
+    const btnMusic = document.getElementById("btn-music");
     const btnHud = document.getElementById("btn-hud");
 
     const state = {
@@ -407,6 +414,8 @@
       spreadFrac: 0.35,
       glitch: 0.45,
       screenGlitch: 0.40,
+      musicWanted: true,
+      musicMissing: false,
       eyeMode: "BOTH",
       psycho: false,
       hudOn: true,
@@ -428,10 +437,70 @@
       nextBeatAt: 0,
       isSlicedBeat: false,
       clusters: { L: [], R: [] },
-      // Occasional screen & face glitch bursts
       nextScreenGlitchAt: performance.now() + 2000,
       screenGlitchUntil: 0
     };
+
+    // Background Music (back.mp3) immediate load + autoplay + gesture unlock fallback
+    bgm.volume = 0.65;
+
+    function syncMusicButton() {
+      if (state.musicMissing) {
+        btnMusic.textContent = "⚠ NO back.mp3";
+        btnMusic.classList.remove("active");
+      } else if (state.musicWanted) {
+        btnMusic.textContent = "🔊 MUSIC: ON";
+        btnMusic.classList.add("active");
+      } else {
+        btnMusic.textContent = "🔇 MUSIC: OFF";
+        btnMusic.classList.remove("active");
+      }
+    }
+
+    function tryStartBgm() {
+      if (!state.musicWanted || state.musicMissing) return;
+      const playPromise = bgm.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {
+          // Browser blocked autoplay before user interaction; unlock on first click/key
+          const unlock = () => {
+            if (state.musicWanted && !state.musicMissing) {
+              bgm.play().catch(() => {});
+            }
+            window.removeEventListener("pointerdown", unlock);
+            window.removeEventListener("keydown", unlock);
+          };
+          window.addEventListener("pointerdown", unlock, { once: true });
+          window.addEventListener("keydown", unlock, { once: true });
+        });
+      }
+    }
+
+    bgm.addEventListener("error", () => {
+      state.musicMissing = true;
+      syncMusicButton();
+    });
+
+    // Attempt immediate playback as soon as the site loads
+    bgm.load();
+    tryStartBgm();
+
+    btnMusic.addEventListener("click", () => {
+      if (state.musicMissing) return;
+      state.musicWanted = !state.musicWanted;
+      if (state.musicWanted) {
+        bgm.play().catch(() => {});
+      } else {
+        bgm.pause();
+      }
+      syncMusicButton();
+    });
+
+    slVol.addEventListener("input", () => {
+      const v = parseInt(slVol.value, 10) / 100;
+      bgm.volume = v;
+      document.getElementById("val-vol").textContent = `${slVol.value}%`;
+    });
 
     const srcCanvas = document.createElement("canvas");
     const srcCtx = srcCanvas.getContext("2d", { alpha: false });
@@ -563,6 +632,7 @@
     fileInput.addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
+      tryStartBgm();
       try {
         await ensureLandmarker();
         const url = URL.createObjectURL(file);
@@ -615,6 +685,7 @@
     }
 
     async function startCamera() {
+      tryStartBgm();
       try {
         statusLog.textContent = "Opening camera...";
         if (!video.srcObject) {
@@ -709,7 +780,6 @@
       if (now < state.nextBeatAt && !screenGlitchActive) return;
 
       if (screenGlitchActive) {
-        // Rapid stutter snaps during a screen glitch spasm
         if (now >= state.nextBeatAt) {
           state.nextBeatAt = now + 55 + Math.random() * 45;
           state.isSlicedBeat = true;
@@ -745,11 +815,9 @@
       if (level <= 0.01) return false;
 
       if (now >= state.nextScreenGlitchAt) {
-        // Trigger a short glitch spasm (110ms - 260ms)
         const burstLen = 110 + Math.random() * (150 * level + 40);
         state.screenGlitchUntil = now + burstLen;
 
-        // Next spasm in ~0.7s - 4.2s depending on slider & burst mode
         const gapMin = state.psycho ? 450 : 1200 * (1.3 - level);
         const gapSpan = state.psycho ? 1200 : 3200 * (1.3 - level);
         state.nextScreenGlitchAt = state.screenGlitchUntil + Math.max(350, gapMin + Math.random() * gapSpan);
@@ -865,9 +933,7 @@
       ctx.restore();
     }
 
-    // Occasional face & full-screen glitch spasm (fast GPU slices from srcCanvas)
     function applyScreenAndFaceGlitch(W, H, intensity) {
-      // 1. Brief ghost double-exposure shake of the whole face
       if (Math.random() < 0.7) {
         ctx.save();
         ctx.globalAlpha = 0.24 + intensity * 0.14;
@@ -877,7 +943,6 @@
         ctx.restore();
       }
 
-      // 2. Horizontal screen/face slice tearing
       const slices = Math.floor(5 + intensity * 10);
       for (let i = 0; i < slices; i++) {
         const sy = Math.random() * H;
@@ -885,7 +950,6 @@
         const dx = (Math.random() - 0.5) * (64 * intensity + 14);
         ctx.drawImage(srcCanvas, 0, sy, W, sh, dx, sy, W, sh);
 
-        // Occasional thin digital tear bar
         if (Math.random() < 0.22) {
           ctx.fillStyle = Math.random() > 0.5
             ? "rgba(255, 255, 255, 0.18)"
@@ -946,18 +1010,15 @@
         const screenGlitchActive = updateScreenGlitchSchedule(now);
         const sgLevel = state.psycho ? Math.max(0.75, state.screenGlitch) : state.screenGlitch;
 
-        // 1. Draw real face (with brief shake only during screen glitch bursts)
         const shakeX = screenGlitchActive ? (Math.random() - 0.5) * 14 * sgLevel : 0;
         const shakeY = screenGlitchActive ? (Math.random() - 0.5) * 10 * sgLevel : 0;
         ctx.globalAlpha = 1.0;
         ctx.drawImage(srcCanvas, shakeX, shakeY, W, H);
 
-        // 2. Apply occasional screen & face glitch bursts
         if (screenGlitchActive) {
           applyScreenAndFaceGlitch(W, H, sgLevel);
         }
 
-        // 3. Step Sample & Hold eye clones
         stepSampleAndHold(now, screenGlitchActive);
 
         if (state.lastLandmarks) {
@@ -983,7 +1044,6 @@
                 cloneSlice
               );
             }
-            // Real eye always stays active on top (only glitches briefly during screen glitch spasms)
             drawSlicedOrCleanEye(leftOnScreen, shakeX, shakeY, 1, 1, 0, 1.0, realEyeSlice);
           }
 
