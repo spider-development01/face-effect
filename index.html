@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CYBERPSYCHOSIS // LOCAL NEURAL OPTIC GLITCH</title>
+  <title>CYBERPSYCHOSIS // REAL EYE DUPLICATOR</title>
   <style>
     :root {
-      --bg: #030714;
+      --bg: #04060d;
       --cyan: #3ee8ff;
       --magenta: #ff2af5;
-      --green: #4aff2b;
-      --red: #ff2b4a;
-      --panel: rgba(5, 11, 28, 0.84);
+      --panel: rgba(8, 12, 24, 0.86);
       --border: rgba(62, 232, 255, 0.35);
     }
 
@@ -27,7 +25,7 @@
       height: 100%;
       overflow: hidden;
       background: var(--bg);
-      color: #d9f6ff;
+      color: #e4f7ff;
       font-family: "Courier New", Consolas, monospace;
     }
 
@@ -38,8 +36,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at center, #081538 0%, #020510 75%);
-      overflow: hidden;
+      background: #04060d;
     }
 
     canvas#output {
@@ -49,105 +46,68 @@
       display: block;
     }
 
+    canvas#output.fit-contain {
+      object-fit: contain;
+    }
+
     video#webcam {
       display: none;
     }
 
-    /* Scanline overlay */
+    input#file-input {
+      display: none;
+    }
+
+    /* Subtle CRT scanline overlay (pure CSS, zero JS cost) */
     .scanlines {
       pointer-events: none;
       position: absolute;
       inset: 0;
       background: repeating-linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0) 0px,
-        rgba(0, 0, 0, 0) 2px,
-        rgba(2, 6, 18, 0.28) 3px,
-        rgba(2, 6, 18, 0.28) 4px
+        transparent 0px,
+        transparent 3px,
+        rgba(0, 0, 0, 0.16) 4px
       );
-      z-index: 4;
+      z-index: 3;
     }
 
-    /* Cyber-optic HUD */
     #hud {
       pointer-events: none;
       position: absolute;
-      inset: 0;
+      top: 16px;
+      left: 16px;
+      right: 16px;
       z-index: 5;
-      padding: 20px 26px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: opacity 0.2s ease;
-    }
-
-    #hud.hidden {
-      opacity: 0;
-    }
-
-    .hud-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 16px;
+      gap: 12px;
+    }
+
+    #hud.hidden {
+      display: none;
     }
 
     .hud-box {
-      background: rgba(3, 10, 26, 0.55);
+      background: rgba(5, 9, 20, 0.65);
       border: 1px solid rgba(62, 232, 255, 0.35);
-      padding: 10px 14px;
-      backdrop-filter: blur(4px);
-      text-shadow: 0 0 8px rgba(62, 232, 255, 0.5);
+      padding: 8px 12px;
       font-size: 12px;
-      line-height: 1.5;
-      letter-spacing: 0.08em;
+      line-height: 1.45;
+      letter-spacing: 0.06em;
     }
 
     .hud-box.alert {
       border-color: rgba(255, 43, 74, 0.65);
-      color: #ffd5dc;
-      text-shadow: 0 0 8px rgba(255, 43, 74, 0.7);
+      color: #ffd7de;
     }
 
-    .blink {
-      animation: blinkAnim 0.8s steps(2, start) infinite;
-    }
-
-    @keyframes blinkAnim {
-      to { opacity: 0.25; }
-    }
-
-    #subtitle-bar {
-      position: absolute;
-      bottom: 84px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 6;
-      pointer-events: none;
-      text-align: center;
-      width: min(90vw, 900px);
-      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-      font-weight: 700;
-      font-size: clamp(18px, 2.7vw, 32px);
-      color: #ffffff;
-      text-shadow:
-        -2px -2px 0 #000,
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000,
-         0px  3px 10px rgba(0, 0, 0, 0.95);
-      letter-spacing: 0.01em;
-    }
-
-    #subtitle-bar.hidden {
-      display: none;
-    }
-
-    /* Controls Drawer */
+    /* Controls */
     #controls-wrap {
       position: absolute;
-      bottom: 18px;
-      right: 18px;
+      bottom: 16px;
+      right: 16px;
       z-index: 10;
       display: flex;
       flex-direction: column;
@@ -163,26 +123,19 @@
       font-family: inherit;
       font-size: 12px;
       font-weight: bold;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       cursor: pointer;
-      text-transform: uppercase;
-      box-shadow: 0 0 14px rgba(62, 232, 255, 0.2);
-    }
-
-    #toggle-ui-btn:hover {
-      background: rgba(62, 232, 255, 0.16);
     }
 
     #controls {
-      width: min(340px, 92vw);
+      width: min(330px, 92vw);
       background: var(--panel);
       border: 1px solid var(--border);
-      backdrop-filter: blur(10px);
-      padding: 14px;
+      padding: 13px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      box-shadow: 0 0 28px rgba(0, 0, 0, 0.75);
+      gap: 9px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
     }
 
     #controls.collapsed {
@@ -192,15 +145,14 @@
     .ctrl-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       font-size: 11px;
-      letter-spacing: 0.06em;
     }
 
     .ctrl-label {
       display: flex;
       justify-content: space-between;
-      color: #9edfff;
+      color: #a9e4ff;
     }
 
     input[type="range"] {
@@ -209,35 +161,23 @@
       cursor: pointer;
     }
 
-    input[type="text"] {
-      width: 100%;
-      background: rgba(2, 6, 18, 0.9);
-      border: 1px solid rgba(62, 232, 255, 0.35);
-      color: #fff;
-      padding: 6px 8px;
-      font-family: inherit;
-      font-size: 12px;
-    }
-
     .btn-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 7px;
       margin-top: 2px;
     }
 
     .cyber-btn {
-      background: rgba(10, 22, 54, 0.9);
+      background: rgba(14, 24, 50, 0.92);
       border: 1px solid var(--border);
       color: var(--cyan);
-      padding: 8px 10px;
+      padding: 8px 8px;
       font-family: inherit;
       font-size: 11px;
       font-weight: bold;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
       cursor: pointer;
-      transition: 0.15s ease;
+      text-transform: uppercase;
     }
 
     .cyber-btn:hover {
@@ -246,24 +186,23 @@
 
     .cyber-btn.danger {
       border-color: rgba(255, 42, 245, 0.65);
-      color: #ff8ef9;
+      color: #ff8df9;
     }
 
     .cyber-btn.danger.active {
       background: rgba(255, 42, 245, 0.28);
-      box-shadow: 0 0 16px rgba(255, 42, 245, 0.45);
     }
 
-    /* Startup overlay */
+    /* Boot screen */
     #boot-overlay {
       position: absolute;
       inset: 0;
       z-index: 20;
-      background: radial-gradient(circle at center, #08163b 0%, #020510 80%);
+      background: radial-gradient(circle at center, #0a1430 0%, #03060f 80%);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 20px;
     }
 
     #boot-overlay.hidden {
@@ -271,40 +210,35 @@
     }
 
     .boot-card {
-      max-width: 520px;
+      max-width: 500px;
       width: 100%;
-      background: rgba(4, 10, 26, 0.92);
+      background: rgba(6, 10, 22, 0.95);
       border: 1px solid var(--cyan);
-      padding: 28px;
-      box-shadow:
-        -6px 0 24px rgba(255, 42, 245, 0.25),
-         6px 0 24px rgba(74, 255, 43, 0.2);
+      padding: 24px;
     }
 
     .boot-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: bold;
       color: var(--cyan);
-      letter-spacing: 0.14em;
       margin: 0 0 10px;
-      text-shadow: -2px 0 var(--magenta), 2px 0 var(--green);
+      letter-spacing: 0.1em;
     }
 
     .boot-desc {
       font-size: 13px;
-      line-height: 1.6;
-      color: #b7d9f2;
-      margin: 0 0 18px;
+      line-height: 1.55;
+      color: #bdd9ee;
+      margin: 0 0 16px;
     }
 
     #status-log {
       font-size: 12px;
-      color: #7eeeff;
+      color: #82efff;
       background: rgba(0, 0, 0, 0.45);
       border-left: 3px solid var(--magenta);
-      padding: 10px 12px;
-      margin-bottom: 18px;
-      min-height: 44px;
+      padding: 10px;
+      margin-bottom: 16px;
       white-space: pre-wrap;
     }
 
@@ -316,16 +250,16 @@
 
     .boot-btn {
       flex: 1;
-      min-width: 170px;
-      padding: 12px 16px;
+      min-width: 160px;
+      padding: 12px;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
       border: 1px solid var(--cyan);
-      background: rgba(62, 232, 255, 0.14);
+      background: rgba(62, 232, 255, 0.15);
       color: #fff;
     }
 
@@ -334,7 +268,7 @@
     }
 
     .boot-btn.secondary {
-      border-color: rgba(255, 42, 245, 0.55);
+      border-color: rgba(255, 42, 245, 0.65);
       background: rgba(255, 42, 245, 0.12);
     }
   </style>
@@ -342,75 +276,66 @@
 <body>
   <div id="stage">
     <video id="webcam" autoplay playsinline muted></video>
+    <input id="file-input" type="file" accept="image/*" />
     <canvas id="output"></canvas>
     <div class="scanlines"></div>
 
     <div id="hud">
-      <div class="hud-top">
-        <div class="hud-box">
-          <div>OPTIC_FEED // LOCAL_NEURAL_LINK</div>
-          <div id="hud-track">FACE_LOCK: INITIALIZING...</div>
-          <div id="hud-fps">SYNC_RATE: -- FPS</div>
-        </div>
-        <div class="hud-box alert">
-          <div class="blink">⚠ CYBERPSYCHOSIS THRESHOLD EXCEEDED</div>
-          <div id="hud-load">NEURAL_LOAD: 94.2%</div>
-          <div>IMMUNOSUPPRESSANTS: DEPLETED</div>
-        </div>
+      <div class="hud-box">
+        <div>OPTIC_LINK // LOCAL_REAL_FEED</div>
+        <div id="hud-track">FACE_LOCK: INITIALIZING...</div>
+        <div id="hud-fps">FPS: --</div>
       </div>
-      <div class="hud-top" style="align-items:flex-end;">
-        <div class="hud-box" style="font-size:11px; opacity:0.85;">
-          LOCAL PROCESSING ONLY · NO VIDEO LEAVES YOUR DEVICE
-        </div>
+      <div class="hud-box alert">
+        <div>⚠ CYBERPSYCHOSIS OVERLOAD</div>
+        <div id="hud-mode">SOURCE: CAMERA</div>
       </div>
     </div>
-
-    <div id="subtitle-bar">David, come back to me! Come back...</div>
 
     <div id="controls-wrap">
       <button id="toggle-ui-btn">⚙ OPTICS CONFIG</button>
       <div id="controls">
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>PSYCHOSIS INTENSITY</span><span id="val-intensity">80%</span></div>
-          <input id="sl-intensity" type="range" min="0" max="100" value="80" />
+          <div class="ctrl-label"><span>EYE CLONES</span><span id="val-clones">4</span></div>
+          <input id="sl-clones" type="range" min="1" max="7" value="4" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>EYE DUPLICATES</span><span id="val-clones">4</span></div>
-          <input id="sl-clones" type="range" min="1" max="8" value="4" />
+          <div class="ctrl-label"><span>EYE SPREAD</span><span id="val-spread">42px</span></div>
+          <input id="sl-spread" type="range" min="10" max="110" value="42" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>GLITCH TEARING</span><span id="val-glitch">65%</span></div>
-          <input id="sl-glitch" type="range" min="0" max="100" value="65" />
+          <div class="ctrl-label"><span>CLONE CYAN TINT</span><span id="val-tint">18%</span></div>
+          <input id="sl-tint" type="range" min="0" max="65" value="18" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>RGB EDGE SPLIT</span><span id="val-split">34px</span></div>
-          <input id="sl-split" type="range" min="6" max="80" value="34" />
+          <div class="ctrl-label"><span>HEAD ECHO SPLIT</span><span id="val-split">48px</span></div>
+          <input id="sl-split" type="range" min="0" max="120" value="48" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>SUBTITLE OVERLAY</span></div>
-          <input id="inp-sub" type="text" value="David, come back to me! Come back..." />
+          <div class="ctrl-label"><span>GLITCH &amp; JITTER</span><span id="val-glitch">45%</span></div>
+          <input id="sl-glitch" type="range" min="0" max="100" value="45" />
         </div>
         <div class="btn-grid">
-          <button id="btn-overdrive" class="cyber-btn danger">⚡ OVERDRIVE</button>
-          <button id="btn-audio" class="cyber-btn">🔇 AUDIO: OFF</button>
+          <button id="btn-eyemode" class="cyber-btn">EYES: BOTH</button>
+          <button id="btn-overdrive" class="cyber-btn danger">⚡ PSYCHO</button>
+          <button id="btn-upload" class="cyber-btn">🖼 USE PHOTO</button>
+          <button id="btn-cam" class="cyber-btn">📷 USE CAM</button>
           <button id="btn-hud" class="cyber-btn">HUD: ON</button>
-          <button id="btn-sub" class="cyber-btn">SUB: ON</button>
           <button id="btn-snap" class="cyber-btn">📸 SNAPSHOT</button>
-          <button id="btn-full" class="cyber-btn">⛶ FULLSCREEN</button>
         </div>
       </div>
     </div>
 
     <div id="boot-overlay">
       <div class="boot-card">
-        <h1 class="boot-title">CYBERPSYCHOSIS // OPTIC OVERRIDE</h1>
+        <h1 class="boot-title">CYBERPSYCHOSIS // REAL EYE GLITCH</h1>
         <p class="boot-desc">
-          Uses your local webcam &amp; real-time face/eye landmark tracking to duplicate your eyes into glowing cyan clones, split neon magenta/green silhouettes, and glitch your neural feed. Everything runs 100% locally in your browser.
+          Keeps your real face &amp; real eyes visible, extracts feathered cutouts of your actual eyes, and duplicates/glitches them around your face with flanking head echoes. Optimized for fast local FPS.
         </p>
-        <div id="status-log">Ready. Click "JACK IN (CAMERA)" to initialize optics.</div>
+        <div id="status-log">Choose Live Camera or Upload a Photo to begin.</div>
         <div class="boot-actions">
-          <button id="btn-start-cam" class="boot-btn">JACK IN (CAMERA)</button>
-          <button id="btn-start-demo" class="boot-btn secondary">SYNTHETIC DEMO</button>
+          <button id="btn-start-cam" class="boot-btn">LIVE CAMERA</button>
+          <button id="btn-start-photo" class="boot-btn secondary">UPLOAD PHOTO</button>
         </div>
       </div>
     </div>
@@ -419,13 +344,12 @@
   <script type="module">
     import { FilesetResolver, FaceLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
-    // Landmark index groups (MediaPipe 478 Face Mesh)
+    // Eye contour landmarks (MediaPipe 478 Face Mesh)
     const LEFT_EYE_IDX  = [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398];
     const RIGHT_EYE_IDX = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246];
-    const LIPS_IDX      = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185, 40, 39, 37, 0, 267, 269, 270, 409, 415, 310, 311, 312, 13, 82, 81, 42, 183, 78];
 
-    // DOM Elements
     const video = document.getElementById("webcam");
+    const fileInput = document.getElementById("file-input");
     const canvas = document.getElementById("output");
     const ctx = canvas.getContext("2d", { alpha: false });
     const bootOverlay = document.getElementById("boot-overlay");
@@ -433,132 +357,101 @@
     const hud = document.getElementById("hud");
     const hudTrack = document.getElementById("hud-track");
     const hudFps = document.getElementById("hud-fps");
-    const hudLoad = document.getElementById("hud-load");
-    const subtitleBar = document.getElementById("subtitle-bar");
+    const hudMode = document.getElementById("hud-mode");
 
-    // Controls
     const controls = document.getElementById("controls");
     const toggleUiBtn = document.getElementById("toggle-ui-btn");
-    const slIntensity = document.getElementById("sl-intensity");
     const slClones = document.getElementById("sl-clones");
-    const slGlitch = document.getElementById("sl-glitch");
+    const slSpread = document.getElementById("sl-spread");
+    const slTint = document.getElementById("sl-tint");
     const slSplit = document.getElementById("sl-split");
-    const inpSub = document.getElementById("inp-sub");
+    const slGlitch = document.getElementById("sl-glitch");
+    const btnEyeMode = document.getElementById("btn-eyemode");
     const btnOverdrive = document.getElementById("btn-overdrive");
-    const btnAudio = document.getElementById("btn-audio");
     const btnHud = document.getElementById("btn-hud");
-    const btnSub = document.getElementById("btn-sub");
-    const btnSnap = document.getElementById("btn-snap");
-    const btnFull = document.getElementById("btn-full");
 
     const state = {
-      intensity: 0.80,
       clones: 4,
-      glitch: 0.65,
-      split: 34,
+      spread: 42,
+      tint: 0.18,
+      split: 48,
+      glitch: 0.45,
+      eyeMode: "BOTH", // BOTH | LEFT | RIGHT
       overdrive: false,
       hudOn: true,
-      subOn: true,
-      audioOn: false,
-      demoMode: false,
-      running: false,
+      sourceType: "CAMERA", // CAMERA | PHOTO
+      photoImg: null,
       faceLandmarker: null,
-      lastVideoTime: -1,
-      lastDetectTs: -1,
       lastLandmarks: null,
+      running: false,
+      detectIntervalFrames: 1,
+      detectCounter: 0,
+      lastVideoTime: -1,
+      lastDetectTs: 0,
       spike: 0,
-      frameCount: 0,
-      fpsTimer: performance.now(),
-      fps: 0
+      fpsCount: 0,
+      fpsTimer: performance.now()
     };
 
-    // Offscreen buffers for fast duotone + neon edge extraction
-    const EDGE_W = 240;
-    const EDGE_H = 180;
-    const procCanvas = document.createElement("canvas");
-    procCanvas.width = EDGE_W;
-    procCanvas.height = EDGE_H;
-    const procCtx = procCanvas.getContext("2d", { willReadFrequently: true });
+    // Fast GPU source canvas (capped <= 960px wide for high FPS)
+    const srcCanvas = document.createElement("canvas");
+    const srcCtx = srcCanvas.getContext("2d", { alpha: false });
 
-    const baseCanvas = document.createElement("canvas");
-    baseCanvas.width = EDGE_W;
-    baseCanvas.height = EDGE_H;
-    const baseCtx = baseCanvas.getContext("2d");
+    // Tiny detection canvas (320x240) so MediaPipe runs 6x faster
+    const DETECT_W = 320;
+    const DETECT_H = 240;
+    const detectCanvas = document.createElement("canvas");
+    detectCanvas.width = DETECT_W;
+    detectCanvas.height = DETECT_H;
+    const detectCtx = detectCanvas.getContext("2d", { alpha: false });
 
-    const magCanvas = document.createElement("canvas");
-    magCanvas.width = EDGE_W;
-    magCanvas.height = EDGE_H;
-    const magCtx = magCanvas.getContext("2d");
+    // Reusable eye patch buffer + pre-rendered soft feathered almond mask
+    const PW = 192;
+    const PH = 128;
+    const eyePatchCanvas = document.createElement("canvas");
+    eyePatchCanvas.width = PW;
+    eyePatchCanvas.height = PH;
+    const eyePatchCtx = eyePatchCanvas.getContext("2d");
 
-    const grnCanvas = document.createElement("canvas");
-    grnCanvas.width = EDGE_W;
-    grnCanvas.height = EDGE_H;
-    const grnCtx = grnCanvas.getContext("2d");
+    const eyeMaskCanvas = document.createElement("canvas");
+    eyeMaskCanvas.width = PW;
+    eyeMaskCanvas.height = PH;
+    const eyeMaskCtx = eyeMaskCanvas.getContext("2d");
 
-    const frameCanvas = document.createElement("canvas");
-    const frameCtx = frameCanvas.getContext("2d");
+    // Pre-build smooth radial feather mask once at startup
+    (function buildEyeFeatherMask() {
+      eyeMaskCtx.save();
+      eyeMaskCtx.translate(PW * 0.5, PH * 0.5);
+      eyeMaskCtx.scale(1, PH / PW);
+      const r = PW * 0.48;
+      const g = eyeMaskCtx.createRadialGradient(0, 0, r * 0.42, 0, 0, r);
+      g.addColorStop(0.0, "rgba(0,0,0,1)");
+      g.addColorStop(0.62, "rgba(0,0,0,0.92)");
+      g.addColorStop(0.84, "rgba(0,0,0,0.35)");
+      g.addColorStop(1.0, "rgba(0,0,0,0)");
+      eyeMaskCtx.fillStyle = g;
+      eyeMaskCtx.beginPath();
+      eyeMaskCtx.arc(0, 0, r, 0, Math.PI * 2);
+      eyeMaskCtx.fill();
+      eyeMaskCtx.restore();
+    })();
 
-    // Preallocated ImageData buffers
-    const baseImg = baseCtx.createImageData(EDGE_W, EDGE_H);
-    const magImg = magCtx.createImageData(EDGE_W, EDGE_H);
-    const grnImg = grnCtx.createImageData(EDGE_W, EDGE_H);
-
-    // Optional Web Audio synth glitch & cyber-heartbeat
-    let audioCtx = null;
-    let droneOsc = null;
-    let droneGain = null;
-
-    function initAudio() {
-      if (audioCtx) return;
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      droneOsc = audioCtx.createOscillator();
-      const filter = audioCtx.createBiquadFilter();
-      droneGain = audioCtx.createGain();
-      droneOsc.type = "sawtooth";
-      droneOsc.frequency.value = 54;
-      filter.type = "lowpass";
-      filter.frequency.value = 180;
-      droneGain.gain.value = 0.0;
-      droneOsc.connect(filter);
-      filter.connect(droneGain);
-      droneGain.connect(audioCtx.destination);
-      droneOsc.start();
-    }
-
-    function triggerGlitchBeep(strength = 1) {
-      if (!state.audioOn || !audioCtx) return;
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.type = Math.random() > 0.5 ? "square" : "sawtooth";
-      osc.frequency.setValueAtTime(140 + Math.random() * 900, now);
-      osc.frequency.exponentialRampToValueAtTime(60 + Math.random() * 200, now + 0.07);
-      g.gain.setValueAtTime(0.05 * strength, now);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
-      osc.connect(g);
-      g.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.085);
-    }
-
-    // UI Bindings
-    toggleUiBtn.addEventListener("click", () => {
-      controls.classList.toggle("collapsed");
-    });
-
-    slIntensity.addEventListener("input", () => {
-      state.intensity = slIntensity.value / 100;
-      document.getElementById("val-intensity").textContent = `${slIntensity.value}%`;
-    });
+    // UI Events
+    toggleUiBtn.addEventListener("click", () => controls.classList.toggle("collapsed"));
 
     slClones.addEventListener("input", () => {
       state.clones = parseInt(slClones.value, 10);
       document.getElementById("val-clones").textContent = slClones.value;
     });
 
-    slGlitch.addEventListener("input", () => {
-      state.glitch = slGlitch.value / 100;
-      document.getElementById("val-glitch").textContent = `${slGlitch.value}%`;
+    slSpread.addEventListener("input", () => {
+      state.spread = parseInt(slSpread.value, 10);
+      document.getElementById("val-spread").textContent = `${slSpread.value}px`;
+    });
+
+    slTint.addEventListener("input", () => {
+      state.tint = parseInt(slTint.value, 10) / 100;
+      document.getElementById("val-tint").textContent = `${slTint.value}%`;
     });
 
     slSplit.addEventListener("input", () => {
@@ -566,14 +459,21 @@
       document.getElementById("val-split").textContent = `${slSplit.value}px`;
     });
 
-    inpSub.addEventListener("input", () => {
-      subtitleBar.textContent = inpSub.value;
+    slGlitch.addEventListener("input", () => {
+      state.glitch = parseInt(slGlitch.value, 10) / 100;
+      document.getElementById("val-glitch").textContent = `${slGlitch.value}%`;
+    });
+
+    btnEyeMode.addEventListener("click", () => {
+      const modes = ["BOTH", "LEFT", "RIGHT"];
+      state.eyeMode = modes[(modes.indexOf(state.eyeMode) + 1) % modes.length];
+      btnEyeMode.textContent = `EYES: ${state.eyeMode}`;
     });
 
     btnOverdrive.addEventListener("click", () => {
       state.overdrive = !state.overdrive;
       btnOverdrive.classList.toggle("active", state.overdrive);
-      if (state.overdrive) state.spike = 1.0;
+      if (state.overdrive) state.spike = 1;
     });
 
     btnHud.addEventListener("click", () => {
@@ -582,574 +482,314 @@
       btnHud.textContent = `HUD: ${state.hudOn ? "ON" : "OFF"}`;
     });
 
-    btnSub.addEventListener("click", () => {
-      state.subOn = !state.subOn;
-      subtitleBar.classList.toggle("hidden", !state.subOn);
-      btnSub.textContent = `SUB: ${state.subOn ? "ON" : "OFF"}`;
+    document.getElementById("btn-snap").addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.download = `cyberpsychosis-${Date.now()}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
     });
 
-    btnAudio.addEventListener("click", async () => {
-      initAudio();
-      if (audioCtx.state === "suspended") await audioCtx.resume();
-      state.audioOn = !state.audioOn;
-      btnAudio.textContent = `🔊 AUDIO: ${state.audioOn ? "ON" : "OFF"}`;
-      if (!state.audioOn) btnAudio.textContent = "🔇 AUDIO: OFF";
-      if (droneGain) {
-        droneGain.gain.setTargetAtTime(state.audioOn ? 0.04 : 0, audioCtx.currentTime, 0.05);
+    document.getElementById("btn-upload").addEventListener("click", () => fileInput.click());
+    document.getElementById("btn-start-photo").addEventListener("click", () => fileInput.click());
+    document.getElementById("btn-cam").addEventListener("click", startCamera);
+    document.getElementById("btn-start-cam").addEventListener("click", startCamera);
+
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        await ensureLandmarker();
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          state.photoImg = img;
+          state.sourceType = "PHOTO";
+          canvas.classList.add("fit-contain");
+          hudMode.textContent = "SOURCE: PHOTO";
+
+          // Size srcCanvas & output canvas to photo (max 960px)
+          const scale = Math.min(1, 960 / Math.max(img.width, img.height));
+          const w = Math.max(320, Math.round(img.width * scale));
+          const h = Math.max(240, Math.round(img.height * scale));
+          srcCanvas.width = canvas.width = w;
+          srcCanvas.height = canvas.height = h;
+
+          srcCtx.drawImage(img, 0, 0, w, h);
+          detectLandmarksNow(performance.now());
+          bootOverlay.classList.add("hidden");
+          startRenderLoop();
+          URL.revokeObjectURL(url);
+        };
+        img.src = url;
+      } catch (err) {
+        statusLog.textContent = `Error loading photo: ${err.message}`;
       }
+      fileInput.value = "";
     });
 
-    btnSnap.addEventListener("click", () => {
-      const link = document.createElement("a");
-      link.download = `cyberpsychosis-${Date.now()}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    });
-
-    btnFull.addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        document.exitFullscreen().catch(() => {});
-      }
-    });
-
-    function setLog(msg) {
-      statusLog.textContent = msg;
-    }
-
-    async function loadFaceLandmarker() {
-      setLog("Loading MediaPipe WASM & FaceLandmarker model (local inference)...");
+    async function ensureLandmarker() {
+      if (state.faceLandmarker) return state.faceLandmarker;
+      statusLog.textContent = "Loading local FaceLandmarker model...";
       const vision = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
       );
       const modelUrl = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task";
       try {
-        return await FaceLandmarker.createFromOptions(vision, {
+        state.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: { modelAssetPath: modelUrl, delegate: "GPU" },
           runningMode: "VIDEO",
           numFaces: 1
         });
-      } catch (e) {
-        return await FaceLandmarker.createFromOptions(vision, {
+      } catch {
+        state.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: { modelAssetPath: modelUrl, delegate: "CPU" },
           runningMode: "VIDEO",
           numFaces: 1
         });
       }
+      return state.faceLandmarker;
     }
 
-    document.getElementById("btn-start-cam").addEventListener("click", async () => {
+    async function startCamera() {
       try {
-        setLog("Requesting local webcam access...");
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-          audio: false
-        });
-        video.srcObject = stream;
+        statusLog.textContent = "Starting camera (960x540 for high FPS)...";
+        if (!video.srcObject) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { ideal: 60, min: 24 }, facingMode: "user" },
+            audio: false
+          });
+          video.srcObject = stream;
+        }
         await video.play();
+        await ensureLandmarker();
 
-        state.faceLandmarker = await loadFaceLandmarker();
-        state.demoMode = false;
+        state.sourceType = "CAMERA";
+        canvas.classList.remove("fit-contain");
+        hudMode.textContent = "SOURCE: CAMERA";
         bootOverlay.classList.add("hidden");
         startRenderLoop();
       } catch (err) {
         console.error(err);
-        setLog(
-          `Error: ${err.message}\n\n` +
-          `Tip: If you opened this as file:// and your browser blocks webcam/WASM, ` +
-          `run "python -m http.server 8000" in this folder and open http://localhost:8000\n` +
-          `Or click "SYNTHETIC DEMO" to preview without a camera.`
-        );
-      }
-    });
-
-    document.getElementById("btn-start-demo").addEventListener("click", () => {
-      state.demoMode = true;
-      bootOverlay.classList.add("hidden");
-      hudTrack.textContent = "FACE_LOCK: SYNTHETIC_NODE";
-      startRenderLoop();
-    });
-
-    function resizeCanvas() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      const w = Math.floor(window.innerWidth * dpr);
-      const h = Math.floor(window.innerHeight * dpr);
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
+        statusLog.textContent =
+          `Camera error: ${err.message}\n` +
+          `Tip: Run "python -m http.server 8000" and open http://localhost:8000, or click "UPLOAD PHOTO".`;
       }
     }
-    window.addEventListener("resize", resizeCanvas);
 
-    // Draw mirrored webcam or synthetic demo head into frameCanvas
-    function updateSourceFrame(W, H, t) {
-      if (frameCanvas.width !== W || frameCanvas.height !== H) {
-        frameCanvas.width = W;
-        frameCanvas.height = H;
-      }
+    function detectLandmarksNow(now) {
+      if (!state.faceLandmarker || now <= state.lastDetectTs) return;
+      state.lastDetectTs = now;
+      detectCtx.drawImage(srcCanvas, 0, 0, DETECT_W, DETECT_H);
 
-      if (!state.demoMode && video.readyState >= 2) {
-        // Cover-fit + horizontal mirror
-        const vw = video.videoWidth || 1280;
-        const vh = video.videoHeight || 720;
-        const scale = Math.max(W / vw, H / vh);
-        const dw = vw * scale;
-        const dh = vh * scale;
-        const dx = (W - dw) * 0.5;
-        const dy = (H - dh) * 0.5;
+      const t0 = performance.now();
+      const res = state.faceLandmarker.detectForVideo(detectCanvas, now);
+      const dt = performance.now() - t0;
 
-        frameCtx.save();
-        frameCtx.translate(W, 0);
-        frameCtx.scale(-1, 1);
-        frameCtx.drawImage(video, W - dx - dw, dy, dw, dh);
-        frameCtx.restore();
+      // Adaptive throttling: if MediaPipe takes >14ms on this device, skip render frames between detections
+      // so the render/glitch/animation loop still runs at full speed!
+      if (dt > 24) state.detectIntervalFrames = 3;
+      else if (dt > 12) state.detectIntervalFrames = 2;
+      else state.detectIntervalFrames = 1;
+
+      if (res.faceLandmarks && res.faceLandmarks.length > 0) {
+        state.lastLandmarks = res.faceLandmarks[0];
+        hudTrack.textContent = `FACE_LOCK: ACTIVE (${dt.toFixed(0)}ms)`;
       } else {
-        // Synthetic demo silhouette when no webcam is used
-        frameCtx.fillStyle = "#060e24";
-        frameCtx.fillRect(0, 0, W, H);
-        const cx = W * 0.5 + Math.sin(t * 1.4) * 18;
-        const cy = H * 0.48 + Math.cos(t * 2.1) * 10;
-        const r = Math.min(W, H) * 0.25;
-
-        const g = frameCtx.createRadialGradient(cx, cy - r * 0.2, r * 0.1, cx, cy, r * 1.15);
-        g.addColorStop(0, "#7ea6ff");
-        g.addColorStop(0.55, "#234085");
-        g.addColorStop(1, "#060e24");
-        frameCtx.fillStyle = g;
-        frameCtx.beginPath();
-        frameCtx.ellipse(cx, cy, r * 0.78, r * 1.05, 0, 0, Math.PI * 2);
-        frameCtx.fill();
-
-        // Synthetic nose & mouth
-        frameCtx.fillStyle = "#040814";
-        frameCtx.beginPath();
-        frameCtx.ellipse(cx, cy + r * 0.52, r * 0.22, r * 0.14 + Math.sin(t * 4) * 5, 0, 0, Math.PI * 2);
-        frameCtx.fill();
+        hudTrack.textContent = "FACE_LOCK: NO_FACE";
       }
     }
 
-    // Generate deep-blue cyber base + directional neon magenta/green edge canvases
-    function buildNeonLayers() {
-      procCtx.drawImage(frameCanvas, 0, 0, EDGE_W, EDGE_H);
-      const src = procCtx.getImageData(0, 0, EDGE_W, EDGE_H).data;
-      const bOut = baseImg.data;
-      const mOut = magImg.data;
-      const gOut = grnImg.data;
-
-      // Precompute luminance
-      const lum = new Float32Array(EDGE_W * EDGE_H);
-      for (let i = 0, p = 0; i < lum.length; i++, p += 4) {
-        lum[i] = 0.299 * src[p] + 0.587 * src[p + 1] + 0.114 * src[p + 2];
+    function computeEyeGeom(lms, indices, W, H) {
+      let sumX = 0, sumY = 0;
+      for (let i = 0; i < indices.length; i++) {
+        const p = lms[indices[i]];
+        sumX += p.x * W;
+        sumY += p.y * H;
       }
+      const cx = sumX / indices.length;
+      const cy = sumY / indices.length;
 
-      for (let y = 1; y < EDGE_H - 1; y++) {
-        for (let x = 1; x < EDGE_W - 1; x++) {
-          const idx = y * EDGE_W + x;
-          const p = idx * 4;
+      // Horizontal eye corners (index 0 and index 8)
+      let pA = { x: lms[indices[0]].x * W, y: lms[indices[0]].y * H };
+      let pB = { x: lms[indices[8]].x * W, y: lms[indices[8]].y * H };
+      if (pB.x < pA.x) [pA, pB] = [pB, pA];
 
-          // Deep midnight-blue posterized shading
-          const l = lum[idx] / 255;
-          const c = Math.pow(l, 1.35);
-          bOut[p]     = Math.min(255, 4 + c * 42);
-          bOut[p + 1] = Math.min(255, 10 + c * 78);
-          bOut[p + 2] = Math.min(255, 28 + c * 155);
-          bOut[p + 3] = 255;
-
-          // Gradient for anime-style neon edge outlines
-          const gx = lum[idx + 1] - lum[idx - 1];
-          const gy = lum[idx + EDGE_W] - lum[idx - EDGE_W];
-          const mag = Math.sqrt(gx * gx + gy * gy);
-
-          // Left-facing & ridge highlights -> Magenta
-          if (mag > 26 && (gx < 18 || mag > 44)) {
-            const a = Math.min(255, (mag - 22) * 5.2);
-            mOut[p] = 255;
-            mOut[p + 1] = 35;
-            mOut[p + 2] = 255;
-            mOut[p + 3] = a;
-          } else {
-            mOut[p + 3] = 0;
-          }
-
-          // Right-facing edge highlights -> Acid Green
-          if (mag > 26 && (gx > -18 || mag > 44)) {
-            const a = Math.min(255, (mag - 22) * 5.2);
-            gOut[p] = 75;
-            gOut[p + 1] = 255;
-            gOut[p + 2] = 45;
-            gOut[p + 3] = a;
-          } else {
-            gOut[p + 3] = 0;
-          }
-        }
-      }
-
-      baseCtx.putImageData(baseImg, 0, 0);
-      magCtx.putImageData(magImg, 0, 0);
-      grnCtx.putImageData(grnImg, 0, 0);
-    }
-
-    // Convert normalized MediaPipe landmark to mirrored screen coordinates
-    function lmToScreen(lm, W, H) {
-      const vw = video.videoWidth || W;
-      const vh = video.videoHeight || H;
-      const scale = Math.max(W / vw, H / vh);
-      const dw = vw * scale;
-      const dh = vh * scale;
-      const dx = (W - dw) * 0.5;
-      const dy = (H - dh) * 0.5;
-      return {
-        x: W - (dx + lm.x * dw),
-        y: dy + lm.y * dh
-      };
-    }
-
-    // Compute eye geometry from landmarks (or synthetic demo positions)
-    function getEyesData(W, H, t) {
-      if (state.demoMode || !state.lastLandmarks) {
-        if (!state.demoMode) return null;
-        const cx = W * 0.5 + Math.sin(t * 1.4) * 18;
-        const cy = H * 0.44 + Math.cos(t * 2.1) * 10;
-        const r = Math.min(W, H) * 0.25;
-        const makeSynthEye = (ex, ey, side) => {
-          const rx = r * 0.26;
-          const ry = r * 0.14;
-          const pts = [];
-          for (let i = 0; i < 16; i++) {
-            const ang = (i / 16) * Math.PI * 2;
-            pts.push({ x: ex + Math.cos(ang) * rx, y: ey + Math.sin(ang) * ry });
-          }
-          return {
-            pts,
-            cx: ex,
-            cy: ey,
-            rx: rx * 1.55,
-            ry: ry * 2.2,
-            irisX: ex + Math.sin(t * 3.5) * 6 * side,
-            irisY: ey + Math.cos(t * 2.7) * 4,
-            irisR: ry * 0.85,
-            tilt: side * -0.14
-          };
-        };
-        return {
-          eyes: [
-            makeSynthEye(cx - r * 0.34, cy, -1),
-            makeSynthEye(cx + r * 0.34, cy, 1)
-          ],
-          mouth: null
-        };
-      }
-
-      const lms = state.lastLandmarks;
-      const buildEye = (indices, irisCenterIdx, irisEdgeIdx) => {
-        const pts = indices.map((idx) => lmToScreen(lms[idx], W, H));
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (const p of pts) {
-          if (p.x < minX) minX = p.x;
-          if (p.x > maxX) maxX = p.x;
-          if (p.y < minY) minY = p.y;
-          if (p.y > maxY) maxY = p.y;
-        }
-        const cx = (minX + maxX) * 0.5;
-        const cy = (minY + maxY) * 0.5;
-        const ew = Math.max(24, maxX - minX);
-        const eh = Math.max(12, maxY - minY);
-
-        // Eye tilt from outer to inner corner
-        const pA = pts[0];
-        const pB = pts[8];
-        const tilt = Math.atan2(pB.y - pA.y, pB.x - pA.x);
-
-        let irisX = cx, irisY = cy, irisR = ew * 0.22;
-        if (lms[irisCenterIdx] && lms[irisEdgeIdx]) {
-          const ic = lmToScreen(lms[irisCenterIdx], W, H);
-          const ie = lmToScreen(lms[irisEdgeIdx], W, H);
-          irisX = ic.x;
-          irisY = ic.y;
-          irisR = Math.max(6, Math.hypot(ie.x - ic.x, ie.y - ic.y));
-        }
-
-        return {
-          pts,
-          cx,
-          cy,
-          rx: ew * 0.88,
-          ry: Math.max(ew * 0.52, eh * 1.45),
-          irisX,
-          irisY,
-          irisR,
-          tilt
-        };
-      };
-
-      // Note: mirrored coordinates swap screen left/right, both eyes are handled identically
-      const eye1 = buildEye(LEFT_EYE_IDX, 473, 474);
-      const eye2 = buildEye(RIGHT_EYE_IDX, 468, 469);
-
-      const mouthPts = LIPS_IDX.map((idx) => lmToScreen(lms[idx], W, H));
-      let mMinX = Infinity, mMaxX = -Infinity, mMinY = Infinity, mMaxY = -Infinity;
-      for (const p of mouthPts) {
-        if (p.x < mMinX) mMinX = p.x;
-        if (p.x > mMaxX) mMaxX = p.x;
-        if (p.y < mMinY) mMinY = p.y;
-        if (p.y > mMaxY) mMaxY = p.y;
-      }
+      const ew = Math.max(22, Math.hypot(pB.x - pA.x, pB.y - pA.y));
+      const tilt = Math.atan2(pB.y - pA.y, pB.x - pA.x);
 
       return {
-        eyes: [eye1, eye2],
-        mouth: {
-          x: mMinX - 18,
-          y: mMinY - 14,
-          w: (mMaxX - mMinX) + 36,
-          h: (mMaxY - mMinY) + 28
-        }
+        cx,
+        cy,
+        ew,
+        pw: ew * 1.95,
+        ph: ew * 1.38,
+        tilt
       };
     }
 
-    // Draw one stylized glowing cyan anime eye clone at an offset
-    function drawCyberEyeClone(eye, ox, oy, scale, rot, alpha, isPrimary) {
+    // Extract the user's real eye onto eyePatchCanvas with smooth feathered edges
+    function prepareRealEyePatch(eye, tintAmount) {
+      eyePatchCtx.clearRect(0, 0, PW, PH);
+
+      eyePatchCtx.save();
+      eyePatchCtx.translate(PW * 0.5, PH * 0.5);
+      eyePatchCtx.scale(PW / eye.pw, PH / eye.ph);
+      eyePatchCtx.rotate(-eye.tilt);
+      eyePatchCtx.translate(-eye.cx, -eye.cy);
+      eyePatchCtx.drawImage(srcCanvas, 0, 0);
+      eyePatchCtx.restore();
+
+      // Optional subtle cyber-cyan translucent tint while keeping real eye details
+      if (tintAmount > 0.01) {
+        eyePatchCtx.save();
+        eyePatchCtx.globalCompositeOperation = "source-atop";
+        eyePatchCtx.fillStyle = `rgba(55, 220, 255, ${tintAmount})`;
+        eyePatchCtx.fillRect(0, 0, PW, PH);
+        eyePatchCtx.restore();
+      }
+
+      // Feather edges smoothly so there is zero hard rectangular border
+      eyePatchCtx.save();
+      eyePatchCtx.globalCompositeOperation = "destination-in";
+      eyePatchCtx.drawImage(eyeMaskCanvas, 0, 0);
+      eyePatchCtx.restore();
+    }
+
+    function drawExtractedEye(eye, ox, oy, scale, rot, alpha) {
       ctx.save();
       ctx.translate(eye.cx + ox, eye.cy + oy);
-      ctx.rotate(rot);
+      ctx.rotate(eye.tilt + rot);
       ctx.scale(scale, scale);
-      ctx.translate(-eye.cx, -eye.cy);
       ctx.globalAlpha = alpha;
-
-      // 1. Glowing cyan almond backdrop (like Edgerunners' overwhelmed cyan eyes)
-      ctx.save();
-      ctx.beginPath();
-      ctx.ellipse(eye.cx, eye.cy, eye.rx, eye.ry, eye.tilt, 0, Math.PI * 2);
-      ctx.shadowColor = "#38e8ff";
-      ctx.shadowBlur = isPrimary ? 24 : 14;
-      ctx.fillStyle = isPrimary ? "rgba(74, 232, 255, 0.92)" : "rgba(62, 218, 255, 0.80)";
-      ctx.fill();
-      ctx.clip();
-
-      // 2. Subtle dark tinted copy of real eye pixels blended inside
-      ctx.globalAlpha = alpha * 0.45;
-      ctx.globalCompositeOperation = "multiply";
-      const padX = eye.rx * 1.1;
-      const padY = eye.ry * 1.1;
-      ctx.drawImage(
-        frameCanvas,
-        eye.cx - padX, eye.cy - padY, padX * 2, padY * 2,
-        eye.cx - padX, eye.cy - padY, padX * 2, padY * 2
-      );
+      ctx.drawImage(eyePatchCanvas, -eye.pw * 0.5, -eye.ph * 0.5, eye.pw, eye.ph);
       ctx.restore();
-
-      // 3. Crisp dark anime eye contour + iris + sketch lines
-      ctx.strokeStyle = "#04091b";
-      ctx.lineWidth = isPrimary ? 2.8 : 2.1;
-      ctx.lineJoin = "round";
-
-      // Outer cyan-rim shadow line
-      ctx.beginPath();
-      ctx.ellipse(eye.cx, eye.cy, eye.rx, eye.ry, eye.tilt, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Actual tracked eyelid polygon
-      ctx.beginPath();
-      eye.pts.forEach((p, idx) => {
-        if (idx === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      });
-      ctx.closePath();
-      ctx.stroke();
-
-      // Tracked iris & pupil
-      ctx.beginPath();
-      ctx.arc(eye.irisX, eye.irisY, eye.irisR * 1.18, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(eye.irisX, eye.irisY, Math.max(3, eye.irisR * 0.42), 0, Math.PI * 2);
-      ctx.fillStyle = "#04091b";
-      ctx.fill();
-
-      // Edgerunners stressed brow/lid hatch lines
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(eye.cx - eye.rx * 0.65, eye.cy - eye.ry * 0.55);
-      ctx.quadraticCurveTo(eye.cx, eye.cy - eye.ry * 0.9, eye.cx + eye.rx * 0.65, eye.cy - eye.ry * 0.55);
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    function applyGlitchSlices(W, H, amount) {
-      const count = Math.floor(2 + amount * 14);
-      for (let i = 0; i < count; i++) {
-        if (Math.random() > 0.45 + amount * 0.45) continue;
-        const sy = Math.random() * H;
-        const sh = 3 + Math.random() * (28 * amount + 6);
-        const shift = (Math.random() - 0.5) * (70 * amount + 12);
-        ctx.drawImage(canvas, 0, sy, W, sh, shift, sy, W, sh);
-
-        // Occasional magenta/cyan neon glitch bar
-        if (Math.random() < 0.25 * amount) {
-          ctx.fillStyle = Math.random() > 0.5 ? "rgba(255, 42, 245, 0.28)" : "rgba(62, 232, 255, 0.28)";
-          ctx.fillRect(0, sy, W, Math.max(2, sh * 0.35));
-        }
-      }
     }
 
     function startRenderLoop() {
       if (state.running) return;
       state.running = true;
-      resizeCanvas();
 
-      const tick = () => {
+      const loop = () => {
         const now = performance.now();
         const t = now * 0.001;
-        const W = canvas.width;
-        const H = canvas.height;
 
         // FPS counter
-        state.frameCount++;
+        state.fpsCount++;
         if (now - state.fpsTimer >= 500) {
-          state.fps = Math.round((state.frameCount * 1000) / (now - state.fpsTimer));
-          state.frameCount = 0;
+          const fps = Math.round((state.fpsCount * 1000) / (now - state.fpsTimer));
+          hudFps.textContent = `FPS: ${fps}`;
+          state.fpsCount = 0;
           state.fpsTimer = now;
-          hudFps.textContent = `SYNC_RATE: ${state.fps} FPS`;
         }
 
-        // Psychosis intensity + random neural spikes
-        const effIntensity = state.overdrive ? 1.0 : state.intensity;
-        if (Math.random() < 0.035 * (0.3 + state.glitch) || state.overdrive) {
-          state.spike = Math.min(1, state.spike + 0.45 + Math.random() * 0.45);
-          if (Math.random() < 0.35) triggerGlitchBeep(effIntensity);
-        }
-        state.spike *= 0.88;
-        const power = Math.min(1.25, effIntensity * 0.85 + state.spike * 0.55);
+        // Update source buffer
+        if (state.sourceType === "CAMERA" && video.readyState >= 2) {
+          const vw = video.videoWidth || 960;
+          const vh = video.videoHeight || 540;
+          if (srcCanvas.width !== vw || srcCanvas.height !== vh) {
+            srcCanvas.width = canvas.width = vw;
+            srcCanvas.height = canvas.height = vh;
+          }
 
-        hudLoad.textContent = `NEURAL_LOAD: ${(82 + power * 17.9).toFixed(1)}%`;
+          // Mirror webcam into srcCanvas once
+          srcCtx.save();
+          srcCtx.translate(vw, 0);
+          srcCtx.scale(-1, 1);
+          srcCtx.drawImage(video, 0, 0, vw, vh);
+          srcCtx.restore();
 
-        // 1. Run MediaPipe FaceLandmarker on new video frames
-        if (!state.demoMode && state.faceLandmarker && video.readyState >= 2) {
-          if (video.currentTime !== state.lastVideoTime && now > state.lastDetectTs) {
+          if (video.currentTime !== state.lastVideoTime) {
             state.lastVideoTime = video.currentTime;
-            state.lastDetectTs = now;
-            const res = state.faceLandmarker.detectForVideo(video, now);
-            if (res.faceLandmarks && res.faceLandmarks.length > 0) {
-              state.lastLandmarks = res.faceLandmarks[0];
-              hudTrack.textContent = "FACE_LOCK: ACTIVE [478_PTS]";
-            } else {
-              hudTrack.textContent = "FACE_LOCK: SEARCHING...";
+            state.detectCounter++;
+            if (state.detectCounter >= state.detectIntervalFrames) {
+              state.detectCounter = 0;
+              detectLandmarksNow(now);
+            }
+          }
+        } else if (state.sourceType === "PHOTO" && state.photoImg) {
+          srcCtx.drawImage(state.photoImg, 0, 0, srcCanvas.width, srcCanvas.height);
+        }
+
+        const W = canvas.width;
+        const H = canvas.height;
+        if (W === 0 || H === 0) {
+          requestAnimationFrame(loop);
+          return;
+        }
+
+        // Psychosis spikes
+        const gPower = state.overdrive ? 1.0 : state.glitch;
+        if (Math.random() < 0.04 * (0.2 + gPower) || state.overdrive) {
+          state.spike = Math.min(1, state.spike + 0.45);
+        }
+        state.spike *= 0.86;
+        const burst = Math.min(1.2, gPower * 0.7 + state.spike * 0.65);
+
+        const shakeX = (Math.random() - 0.5) * 10 * burst;
+        const shakeY = (Math.random() - 0.5) * 8 * burst;
+
+        // 1. Draw YOUR REAL FACE crisp & clear in the center
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(srcCanvas, shakeX, shakeY, W, H);
+
+        // 2. Draw flanking ghost echoes of your head (like the Edgerunners side heads)
+        if (state.split > 0) {
+          const sp = state.split * (0.8 + burst * 0.55);
+          ctx.save();
+          ctx.globalAlpha = 0.28 + burst * 0.10;
+          ctx.drawImage(srcCanvas, -sp + shakeX * 1.4, shakeY, W, H);
+          ctx.drawImage(srcCanvas,  sp - shakeX * 1.4, -shakeY, W, H);
+          ctx.restore();
+        }
+
+        // 3. Extract YOUR REAL EYES and duplicate/overlap them
+        if (state.lastLandmarks) {
+          const lms = state.lastLandmarks;
+          const eyeLeftOnScreen  = computeEyeGeom(lms, RIGHT_EYE_IDX, W, H);
+          const eyeRightOnScreen = computeEyeGeom(lms, LEFT_EYE_IDX, W, H);
+
+          const targets = [];
+          if (state.eyeMode === "BOTH" || state.eyeMode === "LEFT")  targets.push({ eye: eyeLeftOnScreen, dir: -1 });
+          if (state.eyeMode === "BOTH" || state.eyeMode === "RIGHT") targets.push({ eye: eyeRightOnScreen, dir: 1 });
+
+          for (const { eye, dir } of targets) {
+            prepareRealEyePatch(eye, state.tint);
+
+            // Duplicate real eye clones clustered & trembling around the eye socket
+            for (let c = state.clones; c >= 1; c--) {
+              const frac = c / state.clones;
+              const dist = (10 + frac * state.spread) * (0.75 + burst * 0.45);
+              const angle = (c * 1.35) + Math.sin(t * 7 + c * 1.7) * 0.28;
+              const jx = (Math.random() - 0.5) * 10 * burst;
+              const jy = (Math.random() - 0.5) * 9 * burst;
+
+              const ox = Math.cos(angle) * dist * 0.9 * dir + jx;
+              const oy = Math.sin(angle) * dist * 0.8 + jy;
+              const scale = 0.98 + frac * 0.14;
+              const rot = ((c % 2 === 0 ? 1 : -1) * 0.08 * frac) * (0.5 + burst);
+              const alpha = Math.max(0.45, 0.92 - frac * 0.35);
+
+              drawExtractedEye(eye, ox, oy, scale, rot, alpha);
             }
           }
         }
 
-        // 2. Capture source frame & build cyber duotone + neon edges
-        updateSourceFrame(W, H, t);
-        buildNeonLayers();
-
-        // 3. Draw dark midnight-blue background + trembling face echoes
-        const shakeX = (Math.random() - 0.5) * 14 * power;
-        const shakeY = (Math.random() - 0.5) * 10 * power;
-
-        ctx.fillStyle = "#030716";
-        ctx.fillRect(0, 0, W, H);
-
-        const splitDist = state.split * (0.65 + power * 0.85) + Math.sin(t * 24) * 5 * power;
-
-        // Ghosted left & right face silhouettes (like David's head splitting)
-        ctx.save();
-        ctx.globalAlpha = 0.42;
-        ctx.drawImage(baseCanvas, -splitDist * 1.4 + shakeX, shakeY, W, H);
-        ctx.drawImage(baseCanvas, splitDist * 1.4 + shakeX, shakeY, W, H);
-        ctx.globalAlpha = 0.92;
-        ctx.drawImage(baseCanvas, shakeX * 0.4, shakeY * 0.4, W, H);
-        ctx.restore();
-
-        // Neon Magenta left-shifted edge + center ridge glow
-        ctx.save();
-        ctx.globalCompositeOperation = "screen";
-        ctx.shadowColor = "#ff2af5";
-        ctx.shadowBlur = 14;
-        ctx.globalAlpha = 0.78 + power * 0.22;
-        ctx.drawImage(magCanvas, -splitDist + shakeX, shakeY, W, H);
-        ctx.globalAlpha = 0.45;
-        ctx.drawImage(magCanvas, -splitDist * 2.1 - shakeX, -shakeY, W, H);
-        // Subtle center nose/cheek magenta highlight
-        ctx.globalAlpha = 0.25 + power * 0.2;
-        ctx.drawImage(magCanvas, shakeX * 0.3, shakeY * 0.3, W, H);
-
-        // Neon Acid-Green right-shifted edge
-        ctx.shadowColor = "#4aff2b";
-        ctx.globalAlpha = 0.78 + power * 0.22;
-        ctx.drawImage(grnCanvas, splitDist - shakeX, -shakeY, W, H);
-        ctx.globalAlpha = 0.42;
-        ctx.drawImage(grnCanvas, splitDist * 2.1 + shakeX, shakeY, W, H);
-        ctx.restore();
-
-        // 4. Duplicated Glowing Cyan Eyes + Mouth Fracture
-        const face = getEyesData(W, H, t);
-        if (face) {
-          // Occasional duplicated mouth ghost ("and stuff") during spikes
-          if (face.mouth && (state.spike > 0.35 || state.overdrive)) {
-            const m = face.mouth;
-            const mx = (Math.random() - 0.5) * 26 * power;
-            const my = (Math.random() - 0.5) * 14 * power;
-            ctx.save();
-            ctx.globalAlpha = 0.45 * power;
-            ctx.globalCompositeOperation = "screen";
-            ctx.drawImage(frameCanvas, m.x, m.y, m.w, m.h, m.x + mx, m.y + my, m.w, m.h);
-            ctx.restore();
+        // 4. Fast GPU glitch slice tears (read directly from srcCanvas, never canvas self-copy)
+        if (gPower > 0.02) {
+          const slices = Math.floor(2 + burst * 9);
+          for (let i = 0; i < slices; i++) {
+            if (Math.random() > 0.45 + burst * 0.4) continue;
+            const sy = Math.random() * H;
+            const sh = 4 + Math.random() * (22 * burst + 4);
+            const dx = (Math.random() - 0.5) * (54 * burst + 10);
+            ctx.drawImage(srcCanvas, 0, sy, W, sh, dx, sy, W, sh);
           }
-
-          // Duplicate each eye into fanned, trembling clones
-          const cloneCount = state.clones;
-          face.eyes.forEach((eye, eyeIdx) => {
-            const sideDir = eyeIdx === 0 ? -1 : 1;
-
-            // Back-to-front overlapping eye clones
-            for (let c = cloneCount; c >= 1; c--) {
-              const frac = c / cloneCount;
-              const spread = (18 + frac * 54) * (0.45 + power * 0.85);
-              const jitterX = (Math.random() - 0.5) * 16 * power;
-              const jitterY = (Math.random() - 0.5) * 14 * power;
-
-              // Fan upward/outward + slight spiral arc
-              const angle = (c * 0.65) + Math.sin(t * 9 + c) * 0.25;
-              const ox = sideDir * Math.cos(angle * 0.5) * spread * 0.85 + jitterX;
-              const oy = -Math.abs(Math.sin(angle)) * spread * 0.72 + (c % 2 === 0 ? 10 : -12) + jitterY;
-              const scale = 1.04 + frac * 0.26;
-              const rot = (c % 2 === 0 ? 1 : -1) * 0.12 * frac * power;
-              const alpha = Math.max(0.35, 0.88 - frac * 0.42);
-
-              drawCyberEyeClone(eye, ox, oy, scale, rot, alpha, false);
-            }
-
-            // Primary centered glowing cyan eye
-            drawCyberEyeClone(
-              eye,
-              shakeX * 0.35,
-              shakeY * 0.35,
-              1.05 + power * 0.08,
-              0,
-              0.96,
-              true
-            );
-          });
         }
 
-        // 5. Horizontal glitch slice tearing
-        if (state.glitch > 0.02) {
-          applyGlitchSlices(W, H, state.glitch * (0.45 + power * 0.85));
-        }
-
-        // 6. Deep cyber-vignette
-        const vig = ctx.createRadialGradient(W * 0.5, H * 0.5, Math.min(W, H) * 0.28, W * 0.5, H * 0.5, Math.max(W, H) * 0.72);
-        vig.addColorStop(0, "rgba(0,0,0,0)");
-        vig.addColorStop(1, "rgba(1,4,14,0.72)");
-        ctx.fillStyle = vig;
-        ctx.fillRect(0, 0, W, H);
-
-        requestAnimationFrame(tick);
+        requestAnimationFrame(loop);
       };
 
-      requestAnimationFrame(tick);
+      requestAnimationFrame(loop);
     }
   </script>
 </body>
