@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CYBERPSYCHOSIS // REAL EYE DUPLICATOR</title>
+  <title>CYBERPSYCHOSIS EYES // SAMPLE &amp; HOLD</title>
   <style>
     :root {
-      --bg: #04060d;
-      --cyan: #3ee8ff;
-      --magenta: #ff2af5;
-      --panel: rgba(8, 12, 24, 0.86);
-      --border: rgba(62, 232, 255, 0.35);
+      --bg: #08080a;
+      --accent: #ff3b4e;
+      --panel: rgba(14, 14, 18, 0.88);
+      --border: rgba(255, 255, 255, 0.18);
     }
 
     * {
@@ -25,8 +24,8 @@
       height: 100%;
       overflow: hidden;
       background: var(--bg);
-      color: #e4f7ff;
-      font-family: "Courier New", Consolas, monospace;
+      color: #f3f4f6;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
 
     #stage {
@@ -36,7 +35,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #04060d;
+      background: #08080a;
     }
 
     canvas#output {
@@ -50,60 +49,29 @@
       object-fit: contain;
     }
 
-    video#webcam {
+    video#webcam, input#file-input {
       display: none;
-    }
-
-    input#file-input {
-      display: none;
-    }
-
-    /* Subtle CRT scanline overlay (pure CSS, zero JS cost) */
-    .scanlines {
-      pointer-events: none;
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent 3px,
-        rgba(0, 0, 0, 0.16) 4px
-      );
-      z-index: 3;
     }
 
     #hud {
       pointer-events: none;
       position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
+      top: 14px;
+      left: 14px;
       z-index: 5;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
+      background: rgba(10, 10, 14, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 12px;
+      color: #e5e7eb;
     }
 
     #hud.hidden {
       display: none;
     }
 
-    .hud-box {
-      background: rgba(5, 9, 20, 0.65);
-      border: 1px solid rgba(62, 232, 255, 0.35);
-      padding: 8px 12px;
-      font-size: 12px;
-      line-height: 1.45;
-      letter-spacing: 0.06em;
-    }
-
-    .hud-box.alert {
-      border-color: rgba(255, 43, 74, 0.65);
-      color: #ffd7de;
-    }
-
-    /* Controls */
     #controls-wrap {
       position: absolute;
       bottom: 16px;
@@ -118,24 +86,25 @@
     #toggle-ui-btn {
       background: var(--panel);
       border: 1px solid var(--border);
-      color: var(--cyan);
+      border-radius: 8px;
+      color: #fff;
       padding: 8px 14px;
-      font-family: inherit;
       font-size: 12px;
-      font-weight: bold;
-      letter-spacing: 0.08em;
+      font-weight: 600;
       cursor: pointer;
     }
 
     #controls {
-      width: min(330px, 92vw);
+      width: min(320px, 92vw);
       background: var(--panel);
       border: 1px solid var(--border);
+      border-radius: 10px;
       padding: 13px;
       display: flex;
       flex-direction: column;
       gap: 9px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }
 
     #controls.collapsed {
@@ -152,12 +121,12 @@
     .ctrl-label {
       display: flex;
       justify-content: space-between;
-      color: #a9e4ff;
+      color: #d1d5db;
     }
 
     input[type="range"] {
       width: 100%;
-      accent-color: var(--cyan);
+      accent-color: var(--accent);
       cursor: pointer;
     }
 
@@ -168,37 +137,32 @@
       margin-top: 2px;
     }
 
-    .cyber-btn {
-      background: rgba(14, 24, 50, 0.92);
+    .ui-btn {
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
-      color: var(--cyan);
-      padding: 8px 8px;
-      font-family: inherit;
+      border-radius: 6px;
+      color: #fff;
+      padding: 8px;
       font-size: 11px;
-      font-weight: bold;
+      font-weight: 600;
       cursor: pointer;
-      text-transform: uppercase;
     }
 
-    .cyber-btn:hover {
-      background: rgba(62, 232, 255, 0.18);
+    .ui-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
     }
 
-    .cyber-btn.danger {
-      border-color: rgba(255, 42, 245, 0.65);
-      color: #ff8df9;
+    .ui-btn.active {
+      background: rgba(255, 59, 78, 0.28);
+      border-color: var(--accent);
+      color: #ffd7dc;
     }
 
-    .cyber-btn.danger.active {
-      background: rgba(255, 42, 245, 0.28);
-    }
-
-    /* Boot screen */
     #boot-overlay {
       position: absolute;
       inset: 0;
       z-index: 20;
-      background: radial-gradient(circle at center, #0a1430 0%, #03060f 80%);
+      background: rgba(8, 8, 12, 0.96);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -210,34 +174,36 @@
     }
 
     .boot-card {
-      max-width: 500px;
+      max-width: 460px;
       width: 100%;
-      background: rgba(6, 10, 22, 0.95);
-      border: 1px solid var(--cyan);
+      background: #121218;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 24px;
     }
 
     .boot-title {
-      font-size: 20px;
-      font-weight: bold;
-      color: var(--cyan);
-      margin: 0 0 10px;
-      letter-spacing: 0.1em;
+      font-size: 19px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: #fff;
     }
 
     .boot-desc {
       font-size: 13px;
       line-height: 1.55;
-      color: #bdd9ee;
-      margin: 0 0 16px;
+      color: #9ca3af;
+      margin: 0 0 14px;
     }
 
     #status-log {
+      font-family: ui-monospace, Consolas, monospace;
       font-size: 12px;
-      color: #82efff;
-      background: rgba(0, 0, 0, 0.45);
-      border-left: 3px solid var(--magenta);
+      color: #fca5a5;
+      background: rgba(0, 0, 0, 0.4);
+      border-left: 3px solid var(--accent);
       padding: 10px;
+      border-radius: 4px;
       margin-bottom: 16px;
       white-space: pre-wrap;
     }
@@ -250,26 +216,28 @@
 
     .boot-btn {
       flex: 1;
-      min-width: 160px;
-      padding: 12px;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: bold;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      min-width: 150px;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
-      border: 1px solid var(--cyan);
-      background: rgba(62, 232, 255, 0.15);
+      border: 1px solid var(--accent);
+      background: rgba(255, 59, 78, 0.2);
       color: #fff;
     }
 
     .boot-btn:hover {
-      background: rgba(62, 232, 255, 0.28);
+      background: rgba(255, 59, 78, 0.35);
     }
 
     .boot-btn.secondary {
-      border-color: rgba(255, 42, 245, 0.65);
-      background: rgba(255, 42, 245, 0.12);
+      border-color: var(--border);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .boot-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
     }
   </style>
 </head>
@@ -278,64 +246,53 @@
     <video id="webcam" autoplay playsinline muted></video>
     <input id="file-input" type="file" accept="image/*" />
     <canvas id="output"></canvas>
-    <div class="scanlines"></div>
 
-    <div id="hud">
-      <div class="hud-box">
-        <div>OPTIC_LINK // LOCAL_REAL_FEED</div>
-        <div id="hud-track">FACE_LOCK: INITIALIZING...</div>
-        <div id="hud-fps">FPS: --</div>
-      </div>
-      <div class="hud-box alert">
-        <div>⚠ CYBERPSYCHOSIS OVERLOAD</div>
-        <div id="hud-mode">SOURCE: CAMERA</div>
-      </div>
-    </div>
+    <div id="hud">FPS: -- | FACE: WAIT</div>
 
     <div id="controls-wrap">
-      <button id="toggle-ui-btn">⚙ OPTICS CONFIG</button>
+      <button id="toggle-ui-btn">⚙ Settings</button>
       <div id="controls">
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>EYE CLONES</span><span id="val-clones">4</span></div>
-          <input id="sl-clones" type="range" min="1" max="7" value="4" />
+          <div class="ctrl-label"><span>Max Extra Eyes</span><span id="val-clones">4</span></div>
+          <input id="sl-clones" type="range" min="1" max="8" value="4" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>EYE SPREAD</span><span id="val-spread">42px</span></div>
-          <input id="sl-spread" type="range" min="10" max="110" value="42" />
+          <div class="ctrl-label"><span>Snap &amp; Stop Speed</span><span id="val-speed">280ms</span></div>
+          <input id="sl-speed" type="range" min="90" max="900" step="10" value="280" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>CLONE CYAN TINT</span><span id="val-tint">18%</span></div>
-          <input id="sl-tint" type="range" min="0" max="65" value="18" />
+          <div class="ctrl-label"><span>Max Big / Small Scale</span><span id="val-scale">1.9x</span></div>
+          <input id="sl-scale" type="range" min="11" max="28" value="19" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>HEAD ECHO SPLIT</span><span id="val-split">48px</span></div>
-          <input id="sl-split" type="range" min="0" max="120" value="48" />
+          <div class="ctrl-label"><span>Position Offset Range</span><span id="val-spread">35%</span></div>
+          <input id="sl-spread" type="range" min="10" max="110" value="35" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>GLITCH &amp; JITTER</span><span id="val-glitch">45%</span></div>
-          <input id="sl-glitch" type="range" min="0" max="100" value="45" />
+          <div class="ctrl-label"><span>Eye Slice Glitch</span><span id="val-glitch">35%</span></div>
+          <input id="sl-glitch" type="range" min="0" max="100" value="35" />
         </div>
         <div class="btn-grid">
-          <button id="btn-eyemode" class="cyber-btn">EYES: BOTH</button>
-          <button id="btn-overdrive" class="cyber-btn danger">⚡ PSYCHO</button>
-          <button id="btn-upload" class="cyber-btn">🖼 USE PHOTO</button>
-          <button id="btn-cam" class="cyber-btn">📷 USE CAM</button>
-          <button id="btn-hud" class="cyber-btn">HUD: ON</button>
-          <button id="btn-snap" class="cyber-btn">📸 SNAPSHOT</button>
+          <button id="btn-eyemode" class="ui-btn">EYES: BOTH</button>
+          <button id="btn-psycho" class="ui-btn">⚡ BURST MODE</button>
+          <button id="btn-upload" class="ui-btn">🖼 USE PHOTO</button>
+          <button id="btn-cam" class="ui-btn">📷 USE CAM</button>
+          <button id="btn-hud" class="ui-btn">FPS HUD: ON</button>
+          <button id="btn-snap" class="ui-btn">📸 SNAPSHOT</button>
         </div>
       </div>
     </div>
 
     <div id="boot-overlay">
       <div class="boot-card">
-        <h1 class="boot-title">CYBERPSYCHOSIS // REAL EYE GLITCH</h1>
+        <h1 class="boot-title">Cyberpsychosis Eyes (Sample &amp; Hold)</h1>
         <p class="boot-desc">
-          Keeps your real face &amp; real eyes visible, extracts feathered cutouts of your actual eyes, and duplicates/glitches them around your face with flanking head echoes. Optimized for fast local FPS.
+          Extracts your real eyes cleanly along your eyelids, then duplicates them in stepped bursts—snapping positions, scaling big &amp; small, and freezing in place while staying locked to your face.
         </p>
-        <div id="status-log">Choose Live Camera or Upload a Photo to begin.</div>
+        <div id="status-log">Ready. Pick Live Camera or Upload a Photo.</div>
         <div class="boot-actions">
-          <button id="btn-start-cam" class="boot-btn">LIVE CAMERA</button>
-          <button id="btn-start-photo" class="boot-btn secondary">UPLOAD PHOTO</button>
+          <button id="btn-start-cam" class="boot-btn">Live Camera</button>
+          <button id="btn-start-photo" class="boot-btn secondary">Upload Photo</button>
         </div>
       </div>
     </div>
@@ -344,9 +301,9 @@
   <script type="module">
     import { FilesetResolver, FaceLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
-    // Eye contour landmarks (MediaPipe 478 Face Mesh)
-    const LEFT_EYE_IDX  = [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398];
-    const RIGHT_EYE_IDX = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246];
+    // Ordered upper+lower eyelid contour points (MediaPipe 478 Face Mesh)
+    const LEFT_EYE_RING  = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
+    const RIGHT_EYE_RING = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
 
     const video = document.getElementById("webcam");
     const fileInput = document.getElementById("file-input");
@@ -355,31 +312,27 @@
     const bootOverlay = document.getElementById("boot-overlay");
     const statusLog = document.getElementById("status-log");
     const hud = document.getElementById("hud");
-    const hudTrack = document.getElementById("hud-track");
-    const hudFps = document.getElementById("hud-fps");
-    const hudMode = document.getElementById("hud-mode");
 
     const controls = document.getElementById("controls");
-    const toggleUiBtn = document.getElementById("toggle-ui-btn");
     const slClones = document.getElementById("sl-clones");
+    const slSpeed = document.getElementById("sl-speed");
+    const slScale = document.getElementById("sl-scale");
     const slSpread = document.getElementById("sl-spread");
-    const slTint = document.getElementById("sl-tint");
-    const slSplit = document.getElementById("sl-split");
     const slGlitch = document.getElementById("sl-glitch");
     const btnEyeMode = document.getElementById("btn-eyemode");
-    const btnOverdrive = document.getElementById("btn-overdrive");
+    const btnPsycho = document.getElementById("btn-psycho");
     const btnHud = document.getElementById("btn-hud");
 
     const state = {
-      clones: 4,
-      spread: 42,
-      tint: 0.18,
-      split: 48,
-      glitch: 0.45,
-      eyeMode: "BOTH", // BOTH | LEFT | RIGHT
-      overdrive: false,
+      maxClones: 4,
+      holdMs: 280,
+      maxScale: 1.9,
+      spreadFrac: 0.35, // fraction of eye width
+      glitch: 0.35,
+      eyeMode: "BOTH",  // BOTH | LEFT | RIGHT
+      psycho: false,
       hudOn: true,
-      sourceType: "CAMERA", // CAMERA | PHOTO
+      sourceType: "CAMERA",
       photoImg: null,
       faceLandmarker: null,
       lastLandmarks: null,
@@ -388,16 +341,22 @@
       detectCounter: 0,
       lastVideoTime: -1,
       lastDetectTs: 0,
-      spike: 0,
       fpsCount: 0,
-      fpsTimer: performance.now()
+      fpsTimer: performance.now(),
+      fps: 0,
+      trackStatus: "WAIT",
+      // Sample & Hold state for left & right eye clusters
+      nextBeatAt: 0,
+      isSlicedBeat: false,
+      clusters: {
+        L: [],
+        R: []
+      }
     };
 
-    // Fast GPU source canvas (capped <= 960px wide for high FPS)
     const srcCanvas = document.createElement("canvas");
     const srcCtx = srcCanvas.getContext("2d", { alpha: false });
 
-    // Tiny detection canvas (320x240) so MediaPipe runs 6x faster
     const DETECT_W = 320;
     const DETECT_H = 240;
     const detectCanvas = document.createElement("canvas");
@@ -405,9 +364,9 @@
     detectCanvas.height = DETECT_H;
     const detectCtx = detectCanvas.getContext("2d", { alpha: false });
 
-    // Reusable eye patch buffer + pre-rendered soft feathered almond mask
+    // Reusable buffers for clean feathered eye cutout (no dark border)
     const PW = 192;
-    const PH = 128;
+    const PH = 112;
     const eyePatchCanvas = document.createElement("canvas");
     eyePatchCanvas.width = PW;
     eyePatchCanvas.height = PH;
@@ -418,45 +377,32 @@
     eyeMaskCanvas.height = PH;
     const eyeMaskCtx = eyeMaskCanvas.getContext("2d");
 
-    // Pre-build smooth radial feather mask once at startup
-    (function buildEyeFeatherMask() {
-      eyeMaskCtx.save();
-      eyeMaskCtx.translate(PW * 0.5, PH * 0.5);
-      eyeMaskCtx.scale(1, PH / PW);
-      const r = PW * 0.48;
-      const g = eyeMaskCtx.createRadialGradient(0, 0, r * 0.42, 0, 0, r);
-      g.addColorStop(0.0, "rgba(0,0,0,1)");
-      g.addColorStop(0.62, "rgba(0,0,0,0.92)");
-      g.addColorStop(0.84, "rgba(0,0,0,0.35)");
-      g.addColorStop(1.0, "rgba(0,0,0,0)");
-      eyeMaskCtx.fillStyle = g;
-      eyeMaskCtx.beginPath();
-      eyeMaskCtx.arc(0, 0, r, 0, Math.PI * 2);
-      eyeMaskCtx.fill();
-      eyeMaskCtx.restore();
-    })();
-
-    // UI Events
-    toggleUiBtn.addEventListener("click", () => controls.classList.toggle("collapsed"));
+    // UI Bindings
+    document.getElementById("toggle-ui-btn").addEventListener("click", () => {
+      controls.classList.toggle("collapsed");
+    });
 
     slClones.addEventListener("input", () => {
-      state.clones = parseInt(slClones.value, 10);
+      state.maxClones = parseInt(slClones.value, 10);
       document.getElementById("val-clones").textContent = slClones.value;
+      state.nextBeatAt = 0;
+    });
+
+    slSpeed.addEventListener("input", () => {
+      state.holdMs = parseInt(slSpeed.value, 10);
+      document.getElementById("val-speed").textContent = `${slSpeed.value}ms`;
+    });
+
+    slScale.addEventListener("input", () => {
+      state.maxScale = parseInt(slScale.value, 10) / 10;
+      document.getElementById("val-scale").textContent = `${state.maxScale.toFixed(1)}x`;
+      state.nextBeatAt = 0;
     });
 
     slSpread.addEventListener("input", () => {
-      state.spread = parseInt(slSpread.value, 10);
-      document.getElementById("val-spread").textContent = `${slSpread.value}px`;
-    });
-
-    slTint.addEventListener("input", () => {
-      state.tint = parseInt(slTint.value, 10) / 100;
-      document.getElementById("val-tint").textContent = `${slTint.value}%`;
-    });
-
-    slSplit.addEventListener("input", () => {
-      state.split = parseInt(slSplit.value, 10);
-      document.getElementById("val-split").textContent = `${slSplit.value}px`;
+      state.spreadFrac = parseInt(slSpread.value, 10) / 100;
+      document.getElementById("val-spread").textContent = `${slSpread.value}%`;
+      state.nextBeatAt = 0;
     });
 
     slGlitch.addEventListener("input", () => {
@@ -470,21 +416,21 @@
       btnEyeMode.textContent = `EYES: ${state.eyeMode}`;
     });
 
-    btnOverdrive.addEventListener("click", () => {
-      state.overdrive = !state.overdrive;
-      btnOverdrive.classList.toggle("active", state.overdrive);
-      if (state.overdrive) state.spike = 1;
+    btnPsycho.addEventListener("click", () => {
+      state.psycho = !state.psycho;
+      btnPsycho.classList.toggle("active", state.psycho);
+      state.nextBeatAt = 0;
     });
 
     btnHud.addEventListener("click", () => {
       state.hudOn = !state.hudOn;
       hud.classList.toggle("hidden", !state.hudOn);
-      btnHud.textContent = `HUD: ${state.hudOn ? "ON" : "OFF"}`;
+      btnHud.textContent = `FPS HUD: ${state.hudOn ? "ON" : "OFF"}`;
     });
 
     document.getElementById("btn-snap").addEventListener("click", () => {
       const a = document.createElement("a");
-      a.download = `cyberpsychosis-${Date.now()}.png`;
+      a.download = `cyberpsychosis-eyes-${Date.now()}.png`;
       a.href = canvas.toDataURL("image/png");
       a.click();
     });
@@ -505,9 +451,7 @@
           state.photoImg = img;
           state.sourceType = "PHOTO";
           canvas.classList.add("fit-contain");
-          hudMode.textContent = "SOURCE: PHOTO";
 
-          // Size srcCanvas & output canvas to photo (max 960px)
           const scale = Math.min(1, 960 / Math.max(img.width, img.height));
           const w = Math.max(320, Math.round(img.width * scale));
           const h = Math.max(240, Math.round(img.height * scale));
@@ -552,7 +496,7 @@
 
     async function startCamera() {
       try {
-        statusLog.textContent = "Starting camera (960x540 for high FPS)...";
+        statusLog.textContent = "Opening camera...";
         if (!video.srcObject) {
           const stream = await navigator.mediaDevices.getUserMedia({
             video: { width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { ideal: 60, min: 24 }, facingMode: "user" },
@@ -565,14 +509,13 @@
 
         state.sourceType = "CAMERA";
         canvas.classList.remove("fit-contain");
-        hudMode.textContent = "SOURCE: CAMERA";
         bootOverlay.classList.add("hidden");
         startRenderLoop();
       } catch (err) {
         console.error(err);
         statusLog.textContent =
           `Camera error: ${err.message}\n` +
-          `Tip: Run "python -m http.server 8000" and open http://localhost:8000, or click "UPLOAD PHOTO".`;
+          `Tip: Run "python -m http.server 8000" and open http://localhost:8000, or use "Upload Photo".`;
       }
     }
 
@@ -585,52 +528,160 @@
       const res = state.faceLandmarker.detectForVideo(detectCanvas, now);
       const dt = performance.now() - t0;
 
-      // Adaptive throttling: if MediaPipe takes >14ms on this device, skip render frames between detections
-      // so the render/glitch/animation loop still runs at full speed!
       if (dt > 24) state.detectIntervalFrames = 3;
       else if (dt > 12) state.detectIntervalFrames = 2;
       else state.detectIntervalFrames = 1;
 
       if (res.faceLandmarks && res.faceLandmarks.length > 0) {
         state.lastLandmarks = res.faceLandmarks[0];
-        hudTrack.textContent = `FACE_LOCK: ACTIVE (${dt.toFixed(0)}ms)`;
+        state.trackStatus = `LOCKED (${dt.toFixed(0)}ms)`;
       } else {
-        hudTrack.textContent = "FACE_LOCK: NO_FACE";
+        state.trackStatus = "NO FACE";
       }
     }
 
-    function computeEyeGeom(lms, indices, W, H) {
-      let sumX = 0, sumY = 0;
-      for (let i = 0; i < indices.length; i++) {
-        const p = lms[indices[i]];
-        sumX += p.x * W;
-        sumY += p.y * H;
-      }
-      const cx = sumX / indices.length;
-      const cy = sumY / indices.length;
+    // Generate a stepped "Sample & Hold" layout of clones (duplicate -> stop -> snap -> big/small)
+    function generateClusterStep(count, spread, maxScale) {
+      const list = [];
+      // Pick beat style: oversized wide eyes, mixed big+small cluster, or tight offset pair
+      const styleRoll = Math.random();
 
-      // Horizontal eye corners (index 0 and index 8)
-      let pA = { x: lms[indices[0]].x * W, y: lms[indices[0]].y * H };
-      let pB = { x: lms[indices[8]].x * W, y: lms[indices[8]].y * H };
+      if (styleRoll < 0.28) {
+        // Style A: 1 or 2 BIG stretched overlapping eyes right over the socket (like the zoomed TD screenshot)
+        const bigCount = Math.min(count, Math.random() < 0.5 ? 1 : 2);
+        for (let i = 0; i < bigCount; i++) {
+          const sx = 1.25 + Math.random() * (maxScale - 1.15);
+          const sy = sx * (0.78 + Math.random() * 0.42); // slight stretch
+          list.push({
+            oxFrac: (Math.random() - 0.5) * spread * 0.75,
+            oyFrac: (Math.random() - 0.5) * spread * 0.45,
+            sx,
+            sy,
+            rot: (Math.random() - 0.5) * 0.08,
+            alpha: 0.88 + Math.random() * 0.12
+          });
+        }
+      } else {
+        // Style B: Multi-eye cluster mixing BIG and SMALL eyes around the socket
+        const activeCount = Math.max(1, Math.min(count, Math.ceil(Math.random() * count)));
+        for (let i = 0; i < activeCount; i++) {
+          const isBig = Math.random() < 0.42;
+          const baseScale = isBig
+            ? (1.15 + Math.random() * (maxScale - 1.15))
+            : (0.52 + Math.random() * 0.45); // small eye!
+          const sx = baseScale * (0.9 + Math.random() * 0.25);
+          const sy = baseScale * (0.85 + Math.random() * 0.30);
+
+          list.push({
+            oxFrac: (Math.random() - 0.5) * 2.0 * spread,
+            oyFrac: (Math.random() - 0.5) * 1.45 * spread,
+            sx,
+            sy,
+            rot: (Math.random() - 0.5) * 0.14,
+            alpha: 0.82 + Math.random() * 0.18
+          });
+        }
+      }
+      return list;
+    }
+
+    function stepSampleAndHold(now) {
+      if (now < state.nextBeatAt) return;
+
+      const baseHold = state.psycho ? Math.min(130, state.holdMs * 0.45) : state.holdMs;
+      // Vary hold duration: mostly crisp stops, occasionally quick double-snap
+      const isQuickStutter = Math.random() < 0.28;
+      const duration = isQuickStutter
+        ? 55 + Math.random() * 60
+        : baseHold * (0.65 + Math.random() * 0.9);
+
+      state.nextBeatAt = now + duration;
+
+      // Occasional brief clean beat (0 clones for 1 short tick) so snaps pop harder
+      const briefClear = !state.psycho && Math.random() < 0.12;
+      if (briefClear) {
+        state.clusters.L = [];
+        state.clusters.R = [];
+        state.nextBeatAt = now + 90 + Math.random() * 90;
+        return;
+      }
+
+      state.isSlicedBeat = Math.random() < (state.psycho ? 0.55 : state.glitch);
+      state.clusters.L = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale);
+      state.clusters.R = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale);
+    }
+
+    function traceSmoothClosedLoop(c, pts) {
+      const n = pts.length;
+      c.beginPath();
+      const firstMidX = (pts[n - 1].x + pts[0].x) * 0.5;
+      const firstMidY = (pts[n - 1].y + pts[0].y) * 0.5;
+      c.moveTo(firstMidX, firstMidY);
+      for (let i = 0; i < n; i++) {
+        const p = pts[i];
+        const next = pts[(i + 1) % n];
+        c.quadraticCurveTo(p.x, p.y, (p.x + next.x) * 0.5, (p.y + next.y) * 0.5);
+      }
+      c.closePath();
+    }
+
+    function computeEyeData(lms, ringIndices, W, H) {
+      let sumX = 0, sumY = 0;
+      const pts = [];
+      for (let i = 0; i < ringIndices.length; i++) {
+        const p = lms[ringIndices[i]];
+        const sx = p.x * W;
+        const sy = p.y * H;
+        pts.push({ x: sx, y: sy });
+        sumX += sx;
+        sumY += sy;
+      }
+      const cx = sumX / pts.length;
+      const cy = sumY / pts.length;
+
+      let pA = pts[0];
+      let pB = pts[8];
       if (pB.x < pA.x) [pA, pB] = [pB, pA];
 
-      const ew = Math.max(22, Math.hypot(pB.x - pA.x, pB.y - pA.y));
+      const ew = Math.max(20, Math.hypot(pB.x - pA.x, pB.y - pA.y));
       const tilt = Math.atan2(pB.y - pA.y, pB.x - pA.x);
+      const cos = Math.cos(-tilt);
+      const sin = Math.sin(-tilt);
 
-      return {
-        cx,
-        cy,
-        ew,
-        pw: ew * 1.95,
-        ph: ew * 1.38,
-        tilt
-      };
+      const pw = ew * 1.42;
+      const ph = ew * 0.90;
+
+      const patchPts = pts.map((p) => {
+        const dx = p.x - cx;
+        const dy = p.y - cy;
+        const lx = (dx * cos - dy * sin) * 1.12;
+        const ly = (dx * sin + dy * cos) * 1.24;
+        return {
+          x: PW * 0.5 + (lx / pw) * PW,
+          y: PH * 0.5 + (ly / ph) * PH
+        };
+      });
+
+      return { cx, cy, ew, pw, ph, tilt, patchPts };
     }
 
-    // Extract the user's real eye onto eyePatchCanvas with smooth feathered edges
-    function prepareRealEyePatch(eye, tintAmount) {
-      eyePatchCtx.clearRect(0, 0, PW, PH);
+    // Extract clean feathered eye cutout (TouchDesigner eye_sop + multiply + crop style, NO outline)
+    function prepareCleanEyeCutout(eye) {
+      // 1. Build smooth feathered alpha mask for this eye's exact lid curve
+      eyeMaskCtx.clearRect(0, 0, PW, PH);
+      traceSmoothClosedLoop(eyeMaskCtx, eye.patchPts);
+      eyeMaskCtx.lineJoin = "round";
+      eyeMaskCtx.strokeStyle = "rgba(255,255,255,0.22)";
+      eyeMaskCtx.lineWidth = 9;
+      eyeMaskCtx.stroke();
+      eyeMaskCtx.strokeStyle = "rgba(255,255,255,0.55)";
+      eyeMaskCtx.lineWidth = 4;
+      eyeMaskCtx.stroke();
+      eyeMaskCtx.fillStyle = "#ffffff";
+      eyeMaskCtx.fill();
 
+      // 2. Draw aligned eye pixels from live video/photo
+      eyePatchCtx.clearRect(0, 0, PW, PH);
       eyePatchCtx.save();
       eyePatchCtx.translate(PW * 0.5, PH * 0.5);
       eyePatchCtx.scale(PW / eye.pw, PH / eye.ph);
@@ -639,29 +690,39 @@
       eyePatchCtx.drawImage(srcCanvas, 0, 0);
       eyePatchCtx.restore();
 
-      // Optional subtle cyber-cyan translucent tint while keeping real eye details
-      if (tintAmount > 0.01) {
-        eyePatchCtx.save();
-        eyePatchCtx.globalCompositeOperation = "source-atop";
-        eyePatchCtx.fillStyle = `rgba(55, 220, 255, ${tintAmount})`;
-        eyePatchCtx.fillRect(0, 0, PW, PH);
-        eyePatchCtx.restore();
-      }
-
-      // Feather edges smoothly so there is zero hard rectangular border
+      // 3. Apply smooth feathered eye mask
       eyePatchCtx.save();
       eyePatchCtx.globalCompositeOperation = "destination-in";
       eyePatchCtx.drawImage(eyeMaskCanvas, 0, 0);
       eyePatchCtx.restore();
     }
 
-    function drawExtractedEye(eye, ox, oy, scale, rot, alpha) {
+    function drawSteppedEye(eye, clone) {
+      const ox = clone.oxFrac * eye.ew;
+      const oy = clone.oyFrac * eye.ew;
+
       ctx.save();
       ctx.translate(eye.cx + ox, eye.cy + oy);
-      ctx.rotate(eye.tilt + rot);
-      ctx.scale(scale, scale);
-      ctx.globalAlpha = alpha;
-      ctx.drawImage(eyePatchCanvas, -eye.pw * 0.5, -eye.ph * 0.5, eye.pw, eye.ph);
+      ctx.rotate(eye.tilt + clone.rot);
+      ctx.scale(clone.sx, clone.sy);
+      ctx.globalAlpha = clone.alpha;
+
+      if (!state.isSlicedBeat) {
+        ctx.drawImage(eyePatchCanvas, -eye.pw * 0.5, -eye.ph * 0.5, eye.pw, eye.ph);
+      } else {
+        const strips = 3;
+        const sH = PH / strips;
+        const dH = eye.ph / strips;
+        const gAmt = state.psycho ? 1.0 : state.glitch;
+        for (let s = 0; s < strips; s++) {
+          const shift = (s === 1 ? 1 : -1) * 9 * gAmt;
+          ctx.drawImage(
+            eyePatchCanvas,
+            0, s * sH, PW, sH,
+            -eye.pw * 0.5 + shift, -eye.ph * 0.5 + s * dH, eye.pw, dH
+          );
+        }
+      }
       ctx.restore();
     }
 
@@ -671,18 +732,15 @@
 
       const loop = () => {
         const now = performance.now();
-        const t = now * 0.001;
 
-        // FPS counter
         state.fpsCount++;
         if (now - state.fpsTimer >= 500) {
-          const fps = Math.round((state.fpsCount * 1000) / (now - state.fpsTimer));
-          hudFps.textContent = `FPS: ${fps}`;
+          state.fps = Math.round((state.fpsCount * 1000) / (now - state.fpsTimer));
           state.fpsCount = 0;
           state.fpsTimer = now;
+          hud.textContent = `FPS: ${state.fps} | FACE: ${state.trackStatus}`;
         }
 
-        // Update source buffer
         if (state.sourceType === "CAMERA" && video.readyState >= 2) {
           const vw = video.videoWidth || 960;
           const vh = video.videoHeight || 540;
@@ -691,7 +749,6 @@
             srcCanvas.height = canvas.height = vh;
           }
 
-          // Mirror webcam into srcCanvas once
           srcCtx.save();
           srcCtx.translate(vw, 0);
           srcCtx.scale(-1, 1);
@@ -717,72 +774,30 @@
           return;
         }
 
-        // Psychosis spikes
-        const gPower = state.overdrive ? 1.0 : state.glitch;
-        if (Math.random() < 0.04 * (0.2 + gPower) || state.overdrive) {
-          state.spike = Math.min(1, state.spike + 0.45);
-        }
-        state.spike *= 0.86;
-        const burst = Math.min(1.2, gPower * 0.7 + state.spike * 0.65);
-
-        const shakeX = (Math.random() - 0.5) * 10 * burst;
-        const shakeY = (Math.random() - 0.5) * 8 * burst;
-
-        // 1. Draw YOUR REAL FACE crisp & clear in the center
+        // 1. Clean untouched real face
         ctx.globalAlpha = 1.0;
-        ctx.drawImage(srcCanvas, shakeX, shakeY, W, H);
+        ctx.drawImage(srcCanvas, 0, 0, W, H);
 
-        // 2. Draw flanking ghost echoes of your head (like the Edgerunners side heads)
-        if (state.split > 0) {
-          const sp = state.split * (0.8 + burst * 0.55);
-          ctx.save();
-          ctx.globalAlpha = 0.28 + burst * 0.10;
-          ctx.drawImage(srcCanvas, -sp + shakeX * 1.4, shakeY, W, H);
-          ctx.drawImage(srcCanvas,  sp - shakeX * 1.4, -shakeY, W, H);
-          ctx.restore();
-        }
+        // 2. Sample & Hold stepped eye duplication (duplicate -> stop -> change pos -> big/small)
+        stepSampleAndHold(now);
 
-        // 3. Extract YOUR REAL EYES and duplicate/overlap them
         if (state.lastLandmarks) {
           const lms = state.lastLandmarks;
-          const eyeLeftOnScreen  = computeEyeGeom(lms, RIGHT_EYE_IDX, W, H);
-          const eyeRightOnScreen = computeEyeGeom(lms, LEFT_EYE_IDX, W, H);
+          const leftOnScreen  = computeEyeData(lms, RIGHT_EYE_RING, W, H);
+          const rightOnScreen = computeEyeData(lms, LEFT_EYE_RING, W, H);
 
-          const targets = [];
-          if (state.eyeMode === "BOTH" || state.eyeMode === "LEFT")  targets.push({ eye: eyeLeftOnScreen, dir: -1 });
-          if (state.eyeMode === "BOTH" || state.eyeMode === "RIGHT") targets.push({ eye: eyeRightOnScreen, dir: 1 });
-
-          for (const { eye, dir } of targets) {
-            prepareRealEyePatch(eye, state.tint);
-
-            // Duplicate real eye clones clustered & trembling around the eye socket
-            for (let c = state.clones; c >= 1; c--) {
-              const frac = c / state.clones;
-              const dist = (10 + frac * state.spread) * (0.75 + burst * 0.45);
-              const angle = (c * 1.35) + Math.sin(t * 7 + c * 1.7) * 0.28;
-              const jx = (Math.random() - 0.5) * 10 * burst;
-              const jy = (Math.random() - 0.5) * 9 * burst;
-
-              const ox = Math.cos(angle) * dist * 0.9 * dir + jx;
-              const oy = Math.sin(angle) * dist * 0.8 + jy;
-              const scale = 0.98 + frac * 0.14;
-              const rot = ((c % 2 === 0 ? 1 : -1) * 0.08 * frac) * (0.5 + burst);
-              const alpha = Math.max(0.45, 0.92 - frac * 0.35);
-
-              drawExtractedEye(eye, ox, oy, scale, rot, alpha);
+          if ((state.eyeMode === "BOTH" || state.eyeMode === "LEFT") && state.clusters.L.length > 0) {
+            prepareCleanEyeCutout(leftOnScreen);
+            for (const clone of state.clusters.L) {
+              drawSteppedEye(leftOnScreen, clone);
             }
           }
-        }
 
-        // 4. Fast GPU glitch slice tears (read directly from srcCanvas, never canvas self-copy)
-        if (gPower > 0.02) {
-          const slices = Math.floor(2 + burst * 9);
-          for (let i = 0; i < slices; i++) {
-            if (Math.random() > 0.45 + burst * 0.4) continue;
-            const sy = Math.random() * H;
-            const sh = 4 + Math.random() * (22 * burst + 4);
-            const dx = (Math.random() - 0.5) * (54 * burst + 10);
-            ctx.drawImage(srcCanvas, 0, sy, W, sh, dx, sy, W, sh);
+          if ((state.eyeMode === "BOTH" || state.eyeMode === "RIGHT") && state.clusters.R.length > 0) {
+            prepareCleanEyeCutout(rightOnScreen);
+            for (const clone of state.clusters.R) {
+              drawSteppedEye(rightOnScreen, clone);
+            }
           }
         }
 
