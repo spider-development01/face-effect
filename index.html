@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CYBERPSYCHOSIS EYES // SAMPLE &amp; HOLD</title>
+  <title>CYBERPSYCHOSIS EYES // LOCAL</title>
   <style>
     :root {
       --bg: #08080a;
       --accent: #ff3b4e;
-      --panel: rgba(14, 14, 18, 0.88);
-      --border: rgba(255, 255, 255, 0.18);
+      --panel: rgba(14, 14, 18, 0.9);
+      --border: rgba(255, 255, 255, 0.2);
     }
 
     * {
@@ -55,11 +55,11 @@
 
     #hud {
       pointer-events: none;
-      position: absolute;
+      position: fixed;
       top: 14px;
       left: 14px;
       z-index: 5;
-      background: rgba(10, 10, 14, 0.65);
+      background: rgba(10, 10, 14, 0.68);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 6px 11px;
@@ -68,45 +68,16 @@
       color: #e5e7eb;
     }
 
-    #hud.hidden,
-    #controls-wrap.hidden {
+    #hud.hidden {
       display: none;
     }
 
-    #controls-wrap {
-      position: absolute;
+    /* Settings panel at bottom-right */
+    #controls {
+      position: fixed;
       bottom: 16px;
       right: 16px;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 8px;
-    }
-
-    #toggle-ui-btn {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      color: #fff;
-      padding: 7px 13px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      opacity: 0.72;
-      transition: opacity 0.15s ease, background 0.15s ease;
-    }
-
-    #toggle-ui-btn:hover {
-      opacity: 1;
-      background: rgba(28, 28, 36, 0.95);
-    }
-
-    #toggle-ui-btn.hidden {
-      display: none;
-    }
-
-    #controls {
+      z-index: 30;
       width: min(320px, 92vw);
       background: var(--panel);
       border: 1px solid var(--border);
@@ -116,10 +87,37 @@
       flex-direction: column;
       gap: 9px;
       backdrop-filter: blur(8px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
     }
 
-    #controls.collapsed {
+    #controls.hidden {
+      display: none;
+    }
+
+    /* Restore Settings button fixed at bottom-right when minimized */
+    #restore-btn {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 30;
+      background: rgba(14, 14, 18, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      color: #fff;
+      padding: 9px 15px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    #restore-btn:hover {
+      background: rgba(34, 34, 44, 0.95);
+      transform: translateY(-1px);
+    }
+
+    #restore-btn.hidden {
       display: none;
     }
 
@@ -131,7 +129,6 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
       font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.03em;
       color: #f3f4f6;
     }
 
@@ -142,10 +139,10 @@
 
     .icon-btn {
       background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 6px;
       color: #fff;
-      padding: 3px 8px;
+      padding: 4px 9px;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
@@ -204,12 +201,12 @@
 
     #toast {
       pointer-events: none;
-      position: absolute;
+      position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 15;
-      background: rgba(10, 10, 14, 0.85);
+      z-index: 40;
+      background: rgba(10, 10, 14, 0.88);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px 14px;
@@ -224,9 +221,9 @@
     }
 
     #boot-overlay {
-      position: absolute;
+      position: fixed;
       inset: 0;
-      z-index: 20;
+      z-index: 50;
       background: rgba(8, 8, 12, 0.96);
       display: flex;
       align-items: center;
@@ -313,56 +310,59 @@
     <canvas id="output"></canvas>
 
     <div id="hud">FPS: -- | FACE: WAIT</div>
-    <div id="toast">Press H to restore Settings &amp; HUD</div>
+    <div id="toast">UI hidden — press H to restore</div>
 
-    <div id="controls-wrap">
-      <div id="controls">
-        <div class="panel-header">
-          <span>⚙ Optics Settings</span>
-          <div class="header-actions">
-            <button id="btn-hide-all" class="icon-btn" title="Hide all UI (Shortcut: H)">Hide UI (H)</button>
-            <button id="btn-minimize" class="icon-btn" title="Minimize settings (Shortcut: M)">— Minimize</button>
-          </div>
-        </div>
-
-        <div class="ctrl-row">
-          <div class="ctrl-label"><span>Max Extra Eyes</span><span id="val-clones">4</span></div>
-          <input id="sl-clones" type="range" min="1" max="8" value="4" />
-        </div>
-        <div class="ctrl-row">
-          <div class="ctrl-label"><span>Snap &amp; Stop Speed</span><span id="val-speed">280ms</span></div>
-          <input id="sl-speed" type="range" min="90" max="900" step="10" value="280" />
-        </div>
-        <div class="ctrl-row">
-          <div class="ctrl-label"><span>Max Big / Small Scale</span><span id="val-scale">1.7x</span></div>
-          <input id="sl-scale" type="range" min="11" max="26" value="17" />
-        </div>
-        <div class="ctrl-row">
-          <div class="ctrl-label"><span>Outer Spread Distance</span><span id="val-spread">35%</span></div>
-          <input id="sl-spread" type="range" min="10" max="110" value="35" />
-        </div>
-        <div class="ctrl-row">
-          <div class="ctrl-label"><span>Eye Slice Glitch</span><span id="val-glitch">35%</span></div>
-          <input id="sl-glitch" type="range" min="0" max="100" value="35" />
-        </div>
-        <div class="btn-grid">
-          <button id="btn-eyemode" class="ui-btn">EYES: BOTH</button>
-          <button id="btn-psycho" class="ui-btn">⚡ BURST MODE</button>
-          <button id="btn-upload" class="ui-btn">🖼 USE PHOTO</button>
-          <button id="btn-cam" class="ui-btn">📷 USE CAM</button>
-          <button id="btn-hud" class="ui-btn">FPS HUD: ON</button>
-          <button id="btn-snap" class="ui-btn">📸 SNAPSHOT</button>
+    <!-- Settings Panel -->
+    <div id="controls">
+      <div class="panel-header">
+        <span>⚙ Optics Settings</span>
+        <div class="header-actions">
+          <button id="btn-minimize" class="icon-btn" title="Minimize to bottom-right button">— Minimize</button>
         </div>
       </div>
 
-      <button id="toggle-ui-btn" class="hidden">⚙ Settings</button>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Max Extra Eyes</span><span id="val-clones">4</span></div>
+        <input id="sl-clones" type="range" min="1" max="8" value="4" />
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Snap &amp; Stop Speed</span><span id="val-speed">280ms</span></div>
+        <input id="sl-speed" type="range" min="90" max="900" step="10" value="280" />
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Max Big / Small Scale</span><span id="val-scale">1.7x</span></div>
+        <input id="sl-scale" type="range" min="11" max="26" value="17" />
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Outer Spread Distance</span><span id="val-spread">35%</span></div>
+        <input id="sl-spread" type="range" min="10" max="110" value="35" />
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Eye Slice Glitch</span><span id="val-glitch">45%</span></div>
+        <input id="sl-glitch" type="range" min="0" max="100" value="45" />
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label"><span>Screen / Face Glitch Bursts</span><span id="val-screen-glitch">40%</span></div>
+        <input id="sl-screen-glitch" type="range" min="0" max="100" value="40" />
+      </div>
+      <div class="btn-grid">
+        <button id="btn-eyemode" class="ui-btn">EYES: BOTH</button>
+        <button id="btn-psycho" class="ui-btn">⚡ BURST MODE</button>
+        <button id="btn-upload" class="ui-btn">🖼 USE PHOTO</button>
+        <button id="btn-cam" class="ui-btn">📷 USE CAM</button>
+        <button id="btn-hud" class="ui-btn">FPS HUD: ON</button>
+        <button id="btn-snap" class="ui-btn">📸 SNAPSHOT</button>
+      </div>
     </div>
+
+    <!-- Bottom-right button shown when minimized -->
+    <button id="restore-btn" class="hidden">⚙ Settings</button>
 
     <div id="boot-overlay">
       <div class="boot-card">
-        <h1 class="boot-title">Cyberpsychosis Eyes (Sample &amp; Hold)</h1>
+        <h1 class="boot-title">Cyberpsychosis Eyes (Local)</h1>
         <p class="boot-desc">
-          Keeps your real eyes active and untouched in front, while duplicating extra real eyes around your eye sockets—snapping positions, scaling big &amp; small, and freezing on beats.
+          Keeps your real eyes active in front while duplicating extra real eyes around your eye sockets—snapping positions, scaling big &amp; small, plus occasional screen &amp; face glitch spasms.
         </p>
         <div id="status-log">Ready. Pick Live Camera or Upload a Photo.</div>
         <div class="boot-actions">
@@ -388,14 +388,14 @@
     const hud = document.getElementById("hud");
     const toast = document.getElementById("toast");
 
-    const controlsWrap = document.getElementById("controls-wrap");
     const controls = document.getElementById("controls");
-    const toggleUiBtn = document.getElementById("toggle-ui-btn");
+    const restoreBtn = document.getElementById("restore-btn");
     const slClones = document.getElementById("sl-clones");
     const slSpeed = document.getElementById("sl-speed");
     const slScale = document.getElementById("sl-scale");
     const slSpread = document.getElementById("sl-spread");
     const slGlitch = document.getElementById("sl-glitch");
+    const slScreenGlitch = document.getElementById("sl-screen-glitch");
     const btnEyeMode = document.getElementById("btn-eyemode");
     const btnPsycho = document.getElementById("btn-psycho");
     const btnHud = document.getElementById("btn-hud");
@@ -405,10 +405,12 @@
       holdMs: 280,
       maxScale: 1.7,
       spreadFrac: 0.35,
-      glitch: 0.35,
+      glitch: 0.45,
+      screenGlitch: 0.40,
       eyeMode: "BOTH",
       psycho: false,
       hudOn: true,
+      minimized: false,
       uiHidden: false,
       sourceType: "CAMERA",
       photoImg: null,
@@ -425,7 +427,10 @@
       trackStatus: "WAIT",
       nextBeatAt: 0,
       isSlicedBeat: false,
-      clusters: { L: [], R: [] }
+      clusters: { L: [], R: [] },
+      // Occasional screen & face glitch bursts
+      nextScreenGlitchAt: performance.now() + 2000,
+      screenGlitchUntil: 0
     };
 
     const srcCanvas = document.createElement("canvas");
@@ -450,34 +455,44 @@
     eyeMaskCanvas.height = PH;
     const eyeMaskCtx = eyeMaskCanvas.getContext("2d");
 
+    // Minimize / Restore / Hide-All UI
     let toastTimer = null;
-    function setSettingsMinimized(minimized) {
-      controls.classList.toggle("collapsed", minimized);
-      toggleUiBtn.classList.toggle("hidden", !minimized);
-    }
-
-    function toggleAllUi() {
-      state.uiHidden = !state.uiHidden;
-      controlsWrap.classList.toggle("hidden", state.uiHidden);
-      hud.classList.toggle("hidden", state.uiHidden || !state.hudOn);
+    function syncUiVisibility() {
       if (state.uiHidden) {
-        toast.classList.add("show");
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
+        controls.classList.add("hidden");
+        restoreBtn.classList.add("hidden");
+        hud.classList.add("hidden");
       } else {
-        toast.classList.remove("show");
+        controls.classList.toggle("hidden", state.minimized);
+        restoreBtn.classList.toggle("hidden", !state.minimized);
+        hud.classList.toggle("hidden", !state.hudOn);
       }
     }
 
-    document.getElementById("btn-minimize").addEventListener("click", () => setSettingsMinimized(true));
-    toggleUiBtn.addEventListener("click", () => setSettingsMinimized(false));
-    document.getElementById("btn-hide-all").addEventListener("click", toggleAllUi);
+    document.getElementById("btn-minimize").addEventListener("click", () => {
+      state.minimized = true;
+      syncUiVisibility();
+    });
+
+    restoreBtn.addEventListener("click", () => {
+      state.minimized = false;
+      syncUiVisibility();
+    });
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "h" || e.key === "H") {
-        toggleAllUi();
-      } else if (e.key === "m" || e.key === "M") {
-        setSettingsMinimized(!controls.classList.contains("collapsed"));
+        state.uiHidden = !state.uiHidden;
+        syncUiVisibility();
+        if (state.uiHidden) {
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
+        } else {
+          toast.classList.remove("show");
+        }
+      } else if ((e.key === "m" || e.key === "M") && !state.uiHidden) {
+        state.minimized = !state.minimized;
+        syncUiVisibility();
       }
     });
 
@@ -509,6 +524,11 @@
       document.getElementById("val-glitch").textContent = `${slGlitch.value}%`;
     });
 
+    slScreenGlitch.addEventListener("input", () => {
+      state.screenGlitch = parseInt(slScreenGlitch.value, 10) / 100;
+      document.getElementById("val-screen-glitch").textContent = `${slScreenGlitch.value}%`;
+    });
+
     btnEyeMode.addEventListener("click", () => {
       const modes = ["BOTH", "LEFT", "RIGHT"];
       state.eyeMode = modes[(modes.indexOf(state.eyeMode) + 1) % modes.length];
@@ -519,11 +539,12 @@
       state.psycho = !state.psycho;
       btnPsycho.classList.toggle("active", state.psycho);
       state.nextBeatAt = 0;
+      if (state.psycho) state.screenGlitchUntil = performance.now() + 260;
     });
 
     btnHud.addEventListener("click", () => {
       state.hudOn = !state.hudOn;
-      hud.classList.toggle("hidden", state.uiHidden || !state.hudOn);
+      syncUiVisibility();
       btnHud.textContent = `FPS HUD: ${state.hudOn ? "ON" : "OFF"}`;
     });
 
@@ -639,8 +660,6 @@
       }
     }
 
-    // Spawn clones ONLY in surrounding zones (never over the real eye center)
-    // outwardDir: -1 for screen-left eye (temple is left), +1 for screen-right eye (temple is right)
     function generateClusterStep(count, spread, maxScale, outwardDir) {
       const list = [];
       const activeCount = Math.max(1, Math.min(count, Math.ceil(Math.random() * count)));
@@ -658,23 +677,18 @@
         let dx, dy;
 
         if (zone === 0) {
-          // Above upper eyelid
           dx = outwardDir * (Math.random() * 0.55) * j;
           dy = -(0.34 + 0.16 * sy + Math.random() * j * 0.55);
         } else if (zone === 1) {
-          // Below lower eyelid
           dx = outwardDir * (Math.random() * 0.55) * j;
           dy = (0.34 + 0.16 * sy + Math.random() * j * 0.55);
         } else if (zone === 2) {
-          // Outward beside temple corner
           dx = outwardDir * (0.64 + 0.28 * sx + Math.random() * j * 0.65);
           dy = (Math.random() - 0.5) * (0.45 + j * 0.8);
         } else if (zone === 3) {
-          // Diagonal outward-up
           dx = outwardDir * (0.44 + 0.22 * sx + Math.random() * j * 0.55);
           dy = -(0.28 + 0.15 * sy + Math.random() * j * 0.45);
         } else {
-          // Diagonal outward-down
           dx = outwardDir * (0.44 + 0.22 * sx + Math.random() * j * 0.55);
           dy = (0.28 + 0.15 * sy + Math.random() * j * 0.45);
         }
@@ -691,8 +705,19 @@
       return list;
     }
 
-    function stepSampleAndHold(now) {
-      if (now < state.nextBeatAt) return;
+    function stepSampleAndHold(now, screenGlitchActive) {
+      if (now < state.nextBeatAt && !screenGlitchActive) return;
+
+      if (screenGlitchActive) {
+        // Rapid stutter snaps during a screen glitch spasm
+        if (now >= state.nextBeatAt) {
+          state.nextBeatAt = now + 55 + Math.random() * 45;
+          state.isSlicedBeat = true;
+          state.clusters.L = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale, -1);
+          state.clusters.R = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale,  1);
+        }
+        return;
+      }
 
       const baseHold = state.psycho ? Math.min(130, state.holdMs * 0.45) : state.holdMs;
       const isQuickStutter = Math.random() < 0.28;
@@ -713,6 +738,24 @@
       state.isSlicedBeat = Math.random() < (state.psycho ? 0.55 : state.glitch);
       state.clusters.L = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale, -1);
       state.clusters.R = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale,  1);
+    }
+
+    function updateScreenGlitchSchedule(now) {
+      const level = state.psycho ? Math.max(0.75, state.screenGlitch) : state.screenGlitch;
+      if (level <= 0.01) return false;
+
+      if (now >= state.nextScreenGlitchAt) {
+        // Trigger a short glitch spasm (110ms - 260ms)
+        const burstLen = 110 + Math.random() * (150 * level + 40);
+        state.screenGlitchUntil = now + burstLen;
+
+        // Next spasm in ~0.7s - 4.2s depending on slider & burst mode
+        const gapMin = state.psycho ? 450 : 1200 * (1.3 - level);
+        const gapSpan = state.psycho ? 1200 : 3200 * (1.3 - level);
+        state.nextScreenGlitchAt = state.screenGlitchUntil + Math.max(350, gapMin + Math.random() * gapSpan);
+      }
+
+      return now < state.screenGlitchUntil;
     }
 
     function traceSmoothClosedLoop(c, pts) {
@@ -797,25 +840,21 @@
       eyePatchCtx.restore();
     }
 
-    function drawSteppedEye(eye, clone) {
-      const ox = clone.oxFrac * eye.ew;
-      const oy = clone.oyFrac * eye.ew;
-
+    function drawSlicedOrCleanEye(eye, ox, oy, sx, sy, rot, alpha, sliceStrength) {
       ctx.save();
       ctx.translate(eye.cx + ox, eye.cy + oy);
-      ctx.rotate(eye.tilt + clone.rot);
-      ctx.scale(clone.sx, clone.sy);
-      ctx.globalAlpha = clone.alpha;
+      ctx.rotate(eye.tilt + rot);
+      ctx.scale(sx, sy);
+      ctx.globalAlpha = alpha;
 
-      if (!state.isSlicedBeat) {
+      if (sliceStrength <= 0.01) {
         ctx.drawImage(eyePatchCanvas, -eye.pw * 0.5, -eye.ph * 0.5, eye.pw, eye.ph);
       } else {
-        const strips = 3;
+        const strips = 4;
         const sH = PH / strips;
         const dH = eye.ph / strips;
-        const gAmt = state.psycho ? 1.0 : state.glitch;
         for (let s = 0; s < strips; s++) {
-          const shift = (s === 1 ? 1 : -1) * 9 * gAmt;
+          const shift = (Math.random() - 0.5) * 20 * sliceStrength;
           ctx.drawImage(
             eyePatchCanvas,
             0, s * sH, PW, sH,
@@ -826,14 +865,34 @@
       ctx.restore();
     }
 
-    // Keep the user's real eye crisp, active, and on top of any nearby clone edges
-    function drawRealEyeOnTop(eye) {
-      ctx.save();
-      ctx.translate(eye.cx, eye.cy);
-      ctx.rotate(eye.tilt);
-      ctx.globalAlpha = 1.0;
-      ctx.drawImage(eyePatchCanvas, -eye.pw * 0.5, -eye.ph * 0.5, eye.pw, eye.ph);
-      ctx.restore();
+    // Occasional face & full-screen glitch spasm (fast GPU slices from srcCanvas)
+    function applyScreenAndFaceGlitch(W, H, intensity) {
+      // 1. Brief ghost double-exposure shake of the whole face
+      if (Math.random() < 0.7) {
+        ctx.save();
+        ctx.globalAlpha = 0.24 + intensity * 0.14;
+        const gx = (Math.random() - 0.5) * 34 * (0.5 + intensity);
+        const gy = (Math.random() - 0.5) * 14 * (0.5 + intensity);
+        ctx.drawImage(srcCanvas, gx, gy, W, H);
+        ctx.restore();
+      }
+
+      // 2. Horizontal screen/face slice tearing
+      const slices = Math.floor(5 + intensity * 10);
+      for (let i = 0; i < slices; i++) {
+        const sy = Math.random() * H;
+        const sh = 4 + Math.random() * (28 * intensity + 6);
+        const dx = (Math.random() - 0.5) * (64 * intensity + 14);
+        ctx.drawImage(srcCanvas, 0, sy, W, sh, dx, sy, W, sh);
+
+        // Occasional thin digital tear bar
+        if (Math.random() < 0.22) {
+          ctx.fillStyle = Math.random() > 0.5
+            ? "rgba(255, 255, 255, 0.18)"
+            : "rgba(255, 45, 85, 0.16)";
+          ctx.fillRect(0, sy, W, Math.max(2, sh * 0.25));
+        }
+      }
     }
 
     function startRenderLoop() {
@@ -884,30 +943,65 @@
           return;
         }
 
-        ctx.globalAlpha = 1.0;
-        ctx.drawImage(srcCanvas, 0, 0, W, H);
+        const screenGlitchActive = updateScreenGlitchSchedule(now);
+        const sgLevel = state.psycho ? Math.max(0.75, state.screenGlitch) : state.screenGlitch;
 
-        stepSampleAndHold(now);
+        // 1. Draw real face (with brief shake only during screen glitch bursts)
+        const shakeX = screenGlitchActive ? (Math.random() - 0.5) * 14 * sgLevel : 0;
+        const shakeY = screenGlitchActive ? (Math.random() - 0.5) * 10 * sgLevel : 0;
+        ctx.globalAlpha = 1.0;
+        ctx.drawImage(srcCanvas, shakeX, shakeY, W, H);
+
+        // 2. Apply occasional screen & face glitch bursts
+        if (screenGlitchActive) {
+          applyScreenAndFaceGlitch(W, H, sgLevel);
+        }
+
+        // 3. Step Sample & Hold eye clones
+        stepSampleAndHold(now, screenGlitchActive);
 
         if (state.lastLandmarks) {
           const lms = state.lastLandmarks;
           const leftOnScreen  = computeEyeData(lms, RIGHT_EYE_RING, W, H);
           const rightOnScreen = computeEyeData(lms, LEFT_EYE_RING, W, H);
 
-          if ((state.eyeMode === "BOTH" || state.eyeMode === "LEFT") && state.clusters.L.length > 0) {
+          const gAmt = state.psycho ? 1.0 : state.glitch;
+          const cloneSlice = (state.isSlicedBeat || screenGlitchActive) ? gAmt : 0;
+          const realEyeSlice = screenGlitchActive ? sgLevel * 0.85 : 0;
+
+          if (state.eyeMode === "BOTH" || state.eyeMode === "LEFT") {
             prepareCleanEyeCutout(leftOnScreen);
             for (const clone of state.clusters.L) {
-              drawSteppedEye(leftOnScreen, clone);
+              drawSlicedOrCleanEye(
+                leftOnScreen,
+                clone.oxFrac * leftOnScreen.ew + shakeX,
+                clone.oyFrac * leftOnScreen.ew + shakeY,
+                clone.sx,
+                clone.sy,
+                clone.rot,
+                clone.alpha,
+                cloneSlice
+              );
             }
-            drawRealEyeOnTop(leftOnScreen);
+            // Real eye always stays active on top (only glitches briefly during screen glitch spasms)
+            drawSlicedOrCleanEye(leftOnScreen, shakeX, shakeY, 1, 1, 0, 1.0, realEyeSlice);
           }
 
-          if ((state.eyeMode === "BOTH" || state.eyeMode === "RIGHT") && state.clusters.R.length > 0) {
+          if (state.eyeMode === "BOTH" || state.eyeMode === "RIGHT") {
             prepareCleanEyeCutout(rightOnScreen);
             for (const clone of state.clusters.R) {
-              drawSteppedEye(rightOnScreen, clone);
+              drawSlicedOrCleanEye(
+                rightOnScreen,
+                clone.oxFrac * rightOnScreen.ew + shakeX,
+                clone.oyFrac * rightOnScreen.ew + shakeY,
+                clone.sx,
+                clone.sy,
+                clone.rot,
+                clone.alpha,
+                cloneSlice
+              );
             }
-            drawRealEyeOnTop(rightOnScreen);
+            drawSlicedOrCleanEye(rightOnScreen, shakeX, shakeY, 1, 1, 0, 1.0, realEyeSlice);
           }
         }
 
