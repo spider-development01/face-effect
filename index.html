@@ -68,7 +68,8 @@
       color: #e5e7eb;
     }
 
-    #hud.hidden {
+    #hud.hidden,
+    #controls-wrap.hidden {
       display: none;
     }
 
@@ -86,12 +87,23 @@
     #toggle-ui-btn {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 999px;
       color: #fff;
-      padding: 8px 14px;
+      padding: 7px 13px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      opacity: 0.72;
+      transition: opacity 0.15s ease, background 0.15s ease;
+    }
+
+    #toggle-ui-btn:hover {
+      opacity: 1;
+      background: rgba(28, 28, 36, 0.95);
+    }
+
+    #toggle-ui-btn.hidden {
+      display: none;
     }
 
     #controls {
@@ -99,7 +111,7 @@
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 13px;
+      padding: 12px 13px 13px;
       display: flex;
       flex-direction: column;
       gap: 9px;
@@ -109,6 +121,38 @@
 
     #controls.collapsed {
       display: none;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: #f3f4f6;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 6px;
+      color: #fff;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.22);
     }
 
     .ctrl-row {
@@ -156,6 +200,27 @@
       background: rgba(255, 59, 78, 0.28);
       border-color: var(--accent);
       color: #ffd7dc;
+    }
+
+    #toast {
+      pointer-events: none;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      background: rgba(10, 10, 14, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #e5e7eb;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    #toast.show {
+      opacity: 1;
     }
 
     #boot-overlay {
@@ -248,10 +313,18 @@
     <canvas id="output"></canvas>
 
     <div id="hud">FPS: -- | FACE: WAIT</div>
+    <div id="toast">Press H to restore Settings &amp; HUD</div>
 
     <div id="controls-wrap">
-      <button id="toggle-ui-btn">⚙ Settings</button>
       <div id="controls">
+        <div class="panel-header">
+          <span>⚙ Optics Settings</span>
+          <div class="header-actions">
+            <button id="btn-hide-all" class="icon-btn" title="Hide all UI (Shortcut: H)">Hide UI (H)</button>
+            <button id="btn-minimize" class="icon-btn" title="Minimize settings (Shortcut: M)">— Minimize</button>
+          </div>
+        </div>
+
         <div class="ctrl-row">
           <div class="ctrl-label"><span>Max Extra Eyes</span><span id="val-clones">4</span></div>
           <input id="sl-clones" type="range" min="1" max="8" value="4" />
@@ -261,11 +334,11 @@
           <input id="sl-speed" type="range" min="90" max="900" step="10" value="280" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>Max Big / Small Scale</span><span id="val-scale">1.9x</span></div>
-          <input id="sl-scale" type="range" min="11" max="28" value="19" />
+          <div class="ctrl-label"><span>Max Big / Small Scale</span><span id="val-scale">1.7x</span></div>
+          <input id="sl-scale" type="range" min="11" max="26" value="17" />
         </div>
         <div class="ctrl-row">
-          <div class="ctrl-label"><span>Position Offset Range</span><span id="val-spread">35%</span></div>
+          <div class="ctrl-label"><span>Outer Spread Distance</span><span id="val-spread">35%</span></div>
           <input id="sl-spread" type="range" min="10" max="110" value="35" />
         </div>
         <div class="ctrl-row">
@@ -281,13 +354,15 @@
           <button id="btn-snap" class="ui-btn">📸 SNAPSHOT</button>
         </div>
       </div>
+
+      <button id="toggle-ui-btn" class="hidden">⚙ Settings</button>
     </div>
 
     <div id="boot-overlay">
       <div class="boot-card">
         <h1 class="boot-title">Cyberpsychosis Eyes (Sample &amp; Hold)</h1>
         <p class="boot-desc">
-          Extracts your real eyes cleanly along your eyelids, then duplicates them in stepped bursts—snapping positions, scaling big &amp; small, and freezing in place while staying locked to your face.
+          Keeps your real eyes active and untouched in front, while duplicating extra real eyes around your eye sockets—snapping positions, scaling big &amp; small, and freezing on beats.
         </p>
         <div id="status-log">Ready. Pick Live Camera or Upload a Photo.</div>
         <div class="boot-actions">
@@ -301,7 +376,6 @@
   <script type="module">
     import { FilesetResolver, FaceLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
-    // Ordered upper+lower eyelid contour points (MediaPipe 478 Face Mesh)
     const LEFT_EYE_RING  = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
     const RIGHT_EYE_RING = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
 
@@ -312,8 +386,11 @@
     const bootOverlay = document.getElementById("boot-overlay");
     const statusLog = document.getElementById("status-log");
     const hud = document.getElementById("hud");
+    const toast = document.getElementById("toast");
 
+    const controlsWrap = document.getElementById("controls-wrap");
     const controls = document.getElementById("controls");
+    const toggleUiBtn = document.getElementById("toggle-ui-btn");
     const slClones = document.getElementById("sl-clones");
     const slSpeed = document.getElementById("sl-speed");
     const slScale = document.getElementById("sl-scale");
@@ -326,12 +403,13 @@
     const state = {
       maxClones: 4,
       holdMs: 280,
-      maxScale: 1.9,
-      spreadFrac: 0.35, // fraction of eye width
+      maxScale: 1.7,
+      spreadFrac: 0.35,
       glitch: 0.35,
-      eyeMode: "BOTH",  // BOTH | LEFT | RIGHT
+      eyeMode: "BOTH",
       psycho: false,
       hudOn: true,
+      uiHidden: false,
       sourceType: "CAMERA",
       photoImg: null,
       faceLandmarker: null,
@@ -345,13 +423,9 @@
       fpsTimer: performance.now(),
       fps: 0,
       trackStatus: "WAIT",
-      // Sample & Hold state for left & right eye clusters
       nextBeatAt: 0,
       isSlicedBeat: false,
-      clusters: {
-        L: [],
-        R: []
-      }
+      clusters: { L: [], R: [] }
     };
 
     const srcCanvas = document.createElement("canvas");
@@ -364,7 +438,6 @@
     detectCanvas.height = DETECT_H;
     const detectCtx = detectCanvas.getContext("2d", { alpha: false });
 
-    // Reusable buffers for clean feathered eye cutout (no dark border)
     const PW = 192;
     const PH = 112;
     const eyePatchCanvas = document.createElement("canvas");
@@ -377,9 +450,35 @@
     eyeMaskCanvas.height = PH;
     const eyeMaskCtx = eyeMaskCanvas.getContext("2d");
 
-    // UI Bindings
-    document.getElementById("toggle-ui-btn").addEventListener("click", () => {
-      controls.classList.toggle("collapsed");
+    let toastTimer = null;
+    function setSettingsMinimized(minimized) {
+      controls.classList.toggle("collapsed", minimized);
+      toggleUiBtn.classList.toggle("hidden", !minimized);
+    }
+
+    function toggleAllUi() {
+      state.uiHidden = !state.uiHidden;
+      controlsWrap.classList.toggle("hidden", state.uiHidden);
+      hud.classList.toggle("hidden", state.uiHidden || !state.hudOn);
+      if (state.uiHidden) {
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
+      } else {
+        toast.classList.remove("show");
+      }
+    }
+
+    document.getElementById("btn-minimize").addEventListener("click", () => setSettingsMinimized(true));
+    toggleUiBtn.addEventListener("click", () => setSettingsMinimized(false));
+    document.getElementById("btn-hide-all").addEventListener("click", toggleAllUi);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "h" || e.key === "H") {
+        toggleAllUi();
+      } else if (e.key === "m" || e.key === "M") {
+        setSettingsMinimized(!controls.classList.contains("collapsed"));
+      }
     });
 
     slClones.addEventListener("input", () => {
@@ -424,7 +523,7 @@
 
     btnHud.addEventListener("click", () => {
       state.hudOn = !state.hudOn;
-      hud.classList.toggle("hidden", !state.hudOn);
+      hud.classList.toggle("hidden", state.uiHidden || !state.hudOn);
       btnHud.textContent = `FPS HUD: ${state.hudOn ? "ON" : "OFF"}`;
     });
 
@@ -540,47 +639,54 @@
       }
     }
 
-    // Generate a stepped "Sample & Hold" layout of clones (duplicate -> stop -> snap -> big/small)
-    function generateClusterStep(count, spread, maxScale) {
+    // Spawn clones ONLY in surrounding zones (never over the real eye center)
+    // outwardDir: -1 for screen-left eye (temple is left), +1 for screen-right eye (temple is right)
+    function generateClusterStep(count, spread, maxScale, outwardDir) {
       const list = [];
-      // Pick beat style: oversized wide eyes, mixed big+small cluster, or tight offset pair
-      const styleRoll = Math.random();
+      const activeCount = Math.max(1, Math.min(count, Math.ceil(Math.random() * count)));
 
-      if (styleRoll < 0.28) {
-        // Style A: 1 or 2 BIG stretched overlapping eyes right over the socket (like the zoomed TD screenshot)
-        const bigCount = Math.min(count, Math.random() < 0.5 ? 1 : 2);
-        for (let i = 0; i < bigCount; i++) {
-          const sx = 1.25 + Math.random() * (maxScale - 1.15);
-          const sy = sx * (0.78 + Math.random() * 0.42); // slight stretch
-          list.push({
-            oxFrac: (Math.random() - 0.5) * spread * 0.75,
-            oyFrac: (Math.random() - 0.5) * spread * 0.45,
-            sx,
-            sy,
-            rot: (Math.random() - 0.5) * 0.08,
-            alpha: 0.88 + Math.random() * 0.12
-          });
-        }
-      } else {
-        // Style B: Multi-eye cluster mixing BIG and SMALL eyes around the socket
-        const activeCount = Math.max(1, Math.min(count, Math.ceil(Math.random() * count)));
-        for (let i = 0; i < activeCount; i++) {
-          const isBig = Math.random() < 0.42;
-          const baseScale = isBig
-            ? (1.15 + Math.random() * (maxScale - 1.15))
-            : (0.52 + Math.random() * 0.45); // small eye!
-          const sx = baseScale * (0.9 + Math.random() * 0.25);
-          const sy = baseScale * (0.85 + Math.random() * 0.30);
+      for (let i = 0; i < activeCount; i++) {
+        const isBig = Math.random() < 0.42;
+        const baseScale = isBig
+          ? (1.1 + Math.random() * (maxScale - 1.1))
+          : (0.55 + Math.random() * 0.42);
+        const sx = baseScale * (0.92 + Math.random() * 0.22);
+        const sy = baseScale * (0.88 + Math.random() * 0.24);
 
-          list.push({
-            oxFrac: (Math.random() - 0.5) * 2.0 * spread,
-            oyFrac: (Math.random() - 0.5) * 1.45 * spread,
-            sx,
-            sy,
-            rot: (Math.random() - 0.5) * 0.14,
-            alpha: 0.82 + Math.random() * 0.18
-          });
+        const zone = (i + Math.floor(Math.random() * 5)) % 5;
+        const j = spread * (0.5 + Math.random() * 0.9);
+        let dx, dy;
+
+        if (zone === 0) {
+          // Above upper eyelid
+          dx = outwardDir * (Math.random() * 0.55) * j;
+          dy = -(0.34 + 0.16 * sy + Math.random() * j * 0.55);
+        } else if (zone === 1) {
+          // Below lower eyelid
+          dx = outwardDir * (Math.random() * 0.55) * j;
+          dy = (0.34 + 0.16 * sy + Math.random() * j * 0.55);
+        } else if (zone === 2) {
+          // Outward beside temple corner
+          dx = outwardDir * (0.64 + 0.28 * sx + Math.random() * j * 0.65);
+          dy = (Math.random() - 0.5) * (0.45 + j * 0.8);
+        } else if (zone === 3) {
+          // Diagonal outward-up
+          dx = outwardDir * (0.44 + 0.22 * sx + Math.random() * j * 0.55);
+          dy = -(0.28 + 0.15 * sy + Math.random() * j * 0.45);
+        } else {
+          // Diagonal outward-down
+          dx = outwardDir * (0.44 + 0.22 * sx + Math.random() * j * 0.55);
+          dy = (0.28 + 0.15 * sy + Math.random() * j * 0.45);
         }
+
+        list.push({
+          oxFrac: dx,
+          oyFrac: dy,
+          sx,
+          sy,
+          rot: (Math.random() - 0.5) * 0.14,
+          alpha: 0.86 + Math.random() * 0.14
+        });
       }
       return list;
     }
@@ -589,7 +695,6 @@
       if (now < state.nextBeatAt) return;
 
       const baseHold = state.psycho ? Math.min(130, state.holdMs * 0.45) : state.holdMs;
-      // Vary hold duration: mostly crisp stops, occasionally quick double-snap
       const isQuickStutter = Math.random() < 0.28;
       const duration = isQuickStutter
         ? 55 + Math.random() * 60
@@ -597,7 +702,6 @@
 
       state.nextBeatAt = now + duration;
 
-      // Occasional brief clean beat (0 clones for 1 short tick) so snaps pop harder
       const briefClear = !state.psycho && Math.random() < 0.12;
       if (briefClear) {
         state.clusters.L = [];
@@ -607,8 +711,8 @@
       }
 
       state.isSlicedBeat = Math.random() < (state.psycho ? 0.55 : state.glitch);
-      state.clusters.L = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale);
-      state.clusters.R = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale);
+      state.clusters.L = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale, -1);
+      state.clusters.R = generateClusterStep(state.maxClones, state.spreadFrac, state.maxScale,  1);
     }
 
     function traceSmoothClosedLoop(c, pts) {
@@ -665,9 +769,7 @@
       return { cx, cy, ew, pw, ph, tilt, patchPts };
     }
 
-    // Extract clean feathered eye cutout (TouchDesigner eye_sop + multiply + crop style, NO outline)
     function prepareCleanEyeCutout(eye) {
-      // 1. Build smooth feathered alpha mask for this eye's exact lid curve
       eyeMaskCtx.clearRect(0, 0, PW, PH);
       traceSmoothClosedLoop(eyeMaskCtx, eye.patchPts);
       eyeMaskCtx.lineJoin = "round";
@@ -680,7 +782,6 @@
       eyeMaskCtx.fillStyle = "#ffffff";
       eyeMaskCtx.fill();
 
-      // 2. Draw aligned eye pixels from live video/photo
       eyePatchCtx.clearRect(0, 0, PW, PH);
       eyePatchCtx.save();
       eyePatchCtx.translate(PW * 0.5, PH * 0.5);
@@ -690,7 +791,6 @@
       eyePatchCtx.drawImage(srcCanvas, 0, 0);
       eyePatchCtx.restore();
 
-      // 3. Apply smooth feathered eye mask
       eyePatchCtx.save();
       eyePatchCtx.globalCompositeOperation = "destination-in";
       eyePatchCtx.drawImage(eyeMaskCanvas, 0, 0);
@@ -723,6 +823,16 @@
           );
         }
       }
+      ctx.restore();
+    }
+
+    // Keep the user's real eye crisp, active, and on top of any nearby clone edges
+    function drawRealEyeOnTop(eye) {
+      ctx.save();
+      ctx.translate(eye.cx, eye.cy);
+      ctx.rotate(eye.tilt);
+      ctx.globalAlpha = 1.0;
+      ctx.drawImage(eyePatchCanvas, -eye.pw * 0.5, -eye.ph * 0.5, eye.pw, eye.ph);
       ctx.restore();
     }
 
@@ -774,11 +884,9 @@
           return;
         }
 
-        // 1. Clean untouched real face
         ctx.globalAlpha = 1.0;
         ctx.drawImage(srcCanvas, 0, 0, W, H);
 
-        // 2. Sample & Hold stepped eye duplication (duplicate -> stop -> change pos -> big/small)
         stepSampleAndHold(now);
 
         if (state.lastLandmarks) {
@@ -791,6 +899,7 @@
             for (const clone of state.clusters.L) {
               drawSteppedEye(leftOnScreen, clone);
             }
+            drawRealEyeOnTop(leftOnScreen);
           }
 
           if ((state.eyeMode === "BOTH" || state.eyeMode === "RIGHT") && state.clusters.R.length > 0) {
@@ -798,6 +907,7 @@
             for (const clone of state.clusters.R) {
               drawSteppedEye(rightOnScreen, clone);
             }
+            drawRealEyeOnTop(rightOnScreen);
           }
         }
 
